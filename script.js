@@ -1,7 +1,5 @@
 // Global variables
 let currentData = null;
-let rfmData = null;
-let segmentData = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -9,251 +7,99 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeEventListeners() {
-    // File upload
     document.getElementById('file-upload').addEventListener('change', handleFileUpload);
-    document.getElementById('load-url-btn').addEventListener('click', handleUrlLoad);
     document.getElementById('analyze-btn').addEventListener('click', analyzeData);
-    document.getElementById('download-btn').addEventListener('click', downloadResults);
 }
 
-async function handleFileUpload(event) {
+function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    showLoading('Reading file...');
-    try {
-        console.log('File selected:', file.name, file.type);
-        
-        let data;
-        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-            data = await readExcelFile(file);
-        } else {
-            data = await readCSVFile(file);
-        }
-        
-        console.log('Data loaded:', data);
-        processUploadedData(data, file.name);
-    } catch (error) {
-        console.error('Error reading file:', error);
-        showError('Error reading file: ' + error.message);
-    } finally {
-        hideLoading();
-    }
-}
-
-async function readCSVFile(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                console.log('CSV content loaded');
+    console.log('File selected:', file.name);
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let data;
+            
+            if (file.name.includes('.xlsx') || file.name.includes('.xls')) {
+                // Handle Excel files - we'll use a simple approach
+                alert('Excel file detected. Please convert to CSV or use the sample data.');
+                return;
+            } else {
+                // Handle CSV files
                 const result = Papa.parse(e.target.result, {
                     header: true,
-                    dynamicTyping: true,
-                    skipEmptyLines: true,
-                    transform: (value) => {
-                        // Handle empty values
-                        if (value === '' || value === null || value === undefined) return null;
-                        return value;
-                    }
+                    skipEmptyLines: true
                 });
-                
-                console.log('Parsed CSV data:', result);
-                
-                if (result.errors.length > 0) {
-                    console.warn('CSV parsing warnings:', result.errors);
-                }
-                
-                resolve(result.data.filter(row => {
-                    // Filter out completely empty rows
-                    return Object.values(row).some(value => value !== null && value !== '');
-                }));
-            } catch (error) {
-                reject(error);
+                data = result.data;
             }
-        };
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsText(file);
-    });
-}
-
-async function readExcelFile(file) {
-    // For Excel files, we'll use a simple approach since we can't use external libraries easily
-    // We'll convert Excel to CSV using SheetJS CDN
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                // If SheetJS is available, use it
-                if (typeof XLSX !== 'undefined') {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    
-                    // Convert to proper format with headers
-                    const headers = jsonData[0];
-                    const rows = jsonData.slice(1);
-                    const result = rows.map(row => {
-                        const obj = {};
-                        headers.forEach((header, index) => {
-                            obj[header] = row[index] !== undefined ? row[index] : null;
-                        });
-                        return obj;
-                    });
-                    
-                    resolve(result.filter(row => Object.values(row).some(val => val !== null)));
-                } else {
-                    // Fallback: ask user to convert to CSV
-                    reject(new Error('Excel files require additional libraries. Please convert to CSV or install SheetJS.'));
-                }
-            } catch (error) {
-                reject(error);
+            
+            console.log('Data loaded:', data);
+            
+            if (!data || data.length === 0) {
+                alert('No data found in file! Please check the file format.');
+                return;
             }
-        };
-        reader.onerror = () => reject(new Error('Failed to read Excel file'));
-        reader.readAsArrayBuffer(file);
-    });
-}
 
-// Add SheetJS library dynamically for Excel support
-function loadSheetJS() {
-    return new Promise((resolve, reject) => {
-        if (typeof XLSX !== 'undefined') {
-            resolve();
-            return;
+            currentData = data;
+            
+            // Show success message
+            document.getElementById('file-info').innerHTML = `
+                <div style="color: green; font-weight: bold;">
+                    ✅ File uploaded successfully!<br>
+                    Rows: ${data.length}<br>
+                    Columns: ${Object.keys(data[0]).join(', ')}
+                </div>
+            `;
+
+            // Show data preview
+            showDataPreview(data);
+            
+            // Auto-fill column selectors
+            populateColumnSelectors(data[0]);
+            
+            // Show configuration section
+            document.querySelector('.config-section').style.display = 'block';
+            document.getElementById('welcome-section').style.display = 'none';
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error reading file. Please make sure it\'s a valid CSV file.');
         }
-        
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load Excel parser'));
-        document.head.appendChild(script);
-    });
-}
-
-async function handleUrlLoad() {
-    const url = document.getElementById('url-input').value.trim();
-    if (!url) {
-        showError('Please enter a URL');
-        return;
-    }
-
-    showLoading('Loading data from URL...');
-    try {
-        console.log('Loading from URL:', url);
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch data: ' + response.status);
-        
-        const contentType = response.headers.get('content-type');
-        console.log('Content type:', contentType);
-        
-        let data;
-        if (url.includes('.xlsx') || url.includes('.xls') || contentType.includes('spreadsheet')) {
-            // For Excel files from URL
-            const buffer = await response.arrayBuffer();
-            if (typeof XLSX === 'undefined') {
-                await loadSheetJS();
-            }
-            const workbook = XLSX.read(buffer, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            data = XLSX.utils.sheet_to_json(worksheet);
-        } else {
-            // For CSV files
-            const text = await response.text();
-            data = Papa.parse(text, {
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true
-            }).data;
-        }
-        
-        console.log('Data loaded from URL:', data);
-        processUploadedData(data, 'URL Dataset');
-    } catch (error) {
-        console.error('Error loading from URL:', error);
-        showError('Error loading from URL: ' + error.message);
-    } finally {
-        hideLoading();
-    }
-}
-
-function processUploadedData(data, filename) {
-    console.log('Processing uploaded data:', data);
+    };
     
-    if (!data || data.length === 0) {
-        showError('No valid data found in file. Please check the file format.');
-        return;
-    }
-
-    // Clean the data - remove empty rows and handle missing values
-    const cleanData = data.filter(row => {
-        return row && Object.keys(row).length > 0 && Object.values(row).some(val => 
-            val !== null && val !== undefined && val !== ''
-        );
-    });
-
-    if (cleanData.length === 0) {
-        showError('No valid data rows found after cleaning.');
-        return;
-    }
-
-    currentData = cleanData;
+    reader.onerror = function() {
+        alert('Error reading file. Please try again.');
+    };
     
-    // Show file info
-    document.getElementById('file-info').innerHTML = `
-        <strong>File:</strong> ${filename}<br>
-        <strong>Rows:</strong> ${cleanData.length}<br>
-        <strong>Columns:</strong> ${Object.keys(cleanData[0]).join(', ')}<br>
-        <strong>First row preview:</strong> ${JSON.stringify(cleanData[0])}
-    `;
-
-    // Populate column selectors
-    populateColumnSelectors(cleanData[0]);
-    
-    // Show configuration section
-    document.querySelector('.config-section').style.display = 'block';
-    document.getElementById('welcome-section').style.display = 'none';
-    
-    // Show data preview
-    showDataPreview(cleanData);
+    reader.readAsText(file);
 }
 
 function showDataPreview(data) {
-    const preview = data.slice(0, 5); // Show first 5 rows
-    let previewHTML = '<div class="data-preview"><h4>Data Preview (First 5 rows):</h4><table>';
+    const preview = data.slice(0, 3); // Show first 3 rows
+    let html = '<div style="margin-top: 10px; border: 1px solid #ccc; padding: 10px; background: #f9f9f9;">';
+    html += '<strong>Data Preview (first 3 rows):</strong><br>';
     
     // Headers
-    previewHTML += '<thead><tr>';
-    Object.keys(data[0]).forEach(key => {
-        previewHTML += `<th>${key}</th>`;
-    });
-    previewHTML += '</tr></thead><tbody>';
+    const headers = Object.keys(data[0]);
+    html += '<div style="font-weight: bold; color: #333;">' + headers.join(' | ') + '</div>';
     
-    // Rows
+    // Data rows
     preview.forEach(row => {
-        previewHTML += '<tr>';
-        Object.values(row).forEach(value => {
-            previewHTML += `<td>${value !== null && value !== undefined ? value : ''}</td>`;
-        });
-        previewHTML += '</tr>';
+        const values = headers.map(header => row[header] || '');
+        html += '<div style="color: #666;">' + values.join(' | ') + '</div>';
     });
     
-    previewHTML += '</tbody></table></div>';
-    
-    // Add preview to file info
-    document.getElementById('file-info').innerHTML += previewHTML;
+    html += '</div>';
+    document.getElementById('file-info').innerHTML += html;
 }
 
 function populateColumnSelectors(firstRow) {
     const columns = Object.keys(firstRow);
-    console.log('Available columns:', columns);
     
-    const selects = ['customer-col', 'date-col', 'quantity-col', 'price-col'];
-    
-    selects.forEach(selectId => {
+    // Clear and populate all selectors
+    ['customer-col', 'date-col', 'amount-col'].forEach(selectId => {
         const select = document.getElementById(selectId);
         select.innerHTML = '<option value="">Select column...</option>';
         
@@ -263,248 +109,280 @@ function populateColumnSelectors(firstRow) {
             option.textContent = col;
             select.appendChild(option);
         });
-        
-        // Auto-select common column names with fuzzy matching
-        autoSelectColumn(selectId, columns);
     });
+    
+    // Try to auto-detect columns
+    autoDetectColumns(columns);
 }
 
-function autoSelectColumn(selectId, columns) {
-    const select = document.getElementById(selectId);
-    const patterns = {
-        'customer-col': ['customer', 'cust', 'client', 'id', 'customerid', 'customer_id'],
-        'date-col': ['date', 'time', 'invoice', 'order', 'created', 'timestamp'],
-        'quantity-col': ['quantity', 'qty', 'amount', 'units', 'number', 'count'],
-        'price-col': ['price', 'cost', 'unitprice', 'unit_price', 'amount', 'value']
-    };
-    
-    const patternsForSelect = patterns[selectId] || [];
-    
-    for (const pattern of patternsForSelect) {
-        const matchingCol = columns.find(col => 
-            col.toLowerCase().includes(pattern.toLowerCase())
-        );
-        if (matchingCol) {
-            select.value = matchingCol;
-            console.log(`Auto-selected ${matchingCol} for ${selectId}`);
-            break;
+function autoDetectColumns(columns) {
+    // Simple auto-detection logic
+    columns.forEach(col => {
+        const colLower = col.toLowerCase();
+        
+        if (colLower.includes('customer') || colLower.includes('cust') || colLower.includes('id')) {
+            document.getElementById('customer-col').value = col;
         }
-    }
+        
+        if (colLower.includes('date') || colLower.includes('time')) {
+            document.getElementById('date-col').value = col;
+        }
+        
+        if (colLower.includes('amount') || colLower.includes('price') || colLower.includes('value') || colLower.includes('total')) {
+            document.getElementById('amount-col').value = col;
+        }
+    });
 }
 
 function analyzeData() {
     if (!currentData) {
-        showError('No data loaded. Please upload a file first.');
+        alert('Please upload a file first!');
         return;
     }
 
-    const config = {
-        customerCol: document.getElementById('customer-col').value,
-        dateCol: document.getElementById('date-col').value,
-        quantityCol: document.getElementById('quantity-col').value,
-        priceCol: document.getElementById('price-col').value
-    };
+    const customerCol = document.getElementById('customer-col').value;
+    const dateCol = document.getElementById('date-col').value;
+    const amountCol = document.getElementById('amount-col').value;
 
-    console.log('Analysis config:', config);
-
-    // Validate configuration
-    if (!config.customerCol) {
-        showError('Please select Customer ID column');
-        return;
-    }
-    
-    if (!config.dateCol) {
-        showError('Please select Date column');
+    if (!customerCol) {
+        alert('Please select Customer ID column');
         return;
     }
 
-    showLoading('Analyzing data...');
-    
-    // Process data in chunks to avoid blocking UI
-    setTimeout(() => {
-        try {
-            console.log('Starting data preprocessing...');
-            const processedData = preprocessData(currentData, config);
-            console.log('Data preprocessing completed:', processedData.length, 'rows');
-            
-            console.log('Calculating RFM...');
-            rfmData = calculateRFM(processedData, config);
-            console.log('RFM calculation completed:', rfmData.length, 'customers');
-            
-            console.log('Performing segmentation...');
-            segmentData = performSegmentation(rfmData);
-            console.log('Segmentation completed');
-            
-            displayResults();
-            document.getElementById('results-section').style.display = 'block';
-            
-            // Scroll to results
-            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
-        } catch (error) {
-            console.error('Analysis error:', error);
-            showError('Analysis error: ' + error.message);
-        } finally {
-            hideLoading();
-        }
-    }, 100);
+    console.log('Starting analysis with:', { customerCol, dateCol, amountCol });
+
+    try {
+        // Process the data
+        const processedData = processData(currentData, customerCol, dateCol, amountCol);
+        
+        // Calculate RFM
+        const rfmData = calculateRFM(processedData, customerCol, dateCol, amountCol);
+        
+        // Perform segmentation
+        const segments = performSegmentation(rfmData);
+        
+        // Display results
+        displayResults(segments);
+        
+        // Show results section
+        document.getElementById('results-section').style.display = 'block';
+        
+    } catch (error) {
+        console.error('Analysis error:', error);
+        alert('Analysis error: ' + error.message);
+    }
 }
 
-function preprocessData(data, config) {
-    console.log('Preprocessing data with config:', config);
-    
-    const processed = data.filter(row => {
-        // Remove rows with missing customer IDs
-        if (!row[config.customerCol] || row[config.customerCol] === '') {
-            console.log('Removing row with missing customer ID:', row);
-            return false;
-        }
-        
-        // Remove negative quantities and prices if columns exist
-        if (config.quantityCol && row[config.quantityCol] < 0) {
-            return false;
-        }
-        if (config.priceCol && row[config.priceCol] < 0) {
-            return false;
-        }
-        
-        return true;
-    }).map(row => {
-        const processed = { ...row };
-        
-        // Calculate total amount
-        if (config.quantityCol && config.priceCol) {
-            const quantity = parseFloat(row[config.quantityCol]) || 0;
-            const price = parseFloat(row[config.priceCol]) || 0;
-            processed.TotalAmount = quantity * price;
-        } else {
-            processed.TotalAmount = 1; // Default value for frequency analysis
-        }
-        
-        // Parse date
-        if (config.dateCol && row[config.dateCol]) {
-            try {
-                processed.InvoiceDate = new Date(row[config.dateCol]);
-                if (isNaN(processed.InvoiceDate.getTime())) {
-                    console.warn('Invalid date:', row[config.dateCol]);
-                    processed.InvoiceDate = new Date(); // Fallback to current date
-                }
-            } catch (error) {
-                console.warn('Date parsing error:', error);
-                processed.InvoiceDate = new Date(); // Fallback to current date
-            }
-        } else {
-            processed.InvoiceDate = new Date(); // Fallback to current date
-        }
-        
+function processData(data, customerCol, dateCol, amountCol) {
+    return data.map(row => {
+        const processed = {
+            CustomerID: row[customerCol] || 'Unknown',
+            InvoiceDate: dateCol ? new Date(row[dateCol]) : new Date(),
+            Amount: amountCol ? parseFloat(row[amountCol]) || 0 : 1
+        };
         return processed;
+    }).filter(row => row.CustomerID && row.CustomerID !== 'Unknown');
+}
+
+function calculateRFM(data, customerCol, dateCol, amountCol) {
+    const referenceDate = new Date(Math.max(...data.map(row => row.InvoiceDate)));
+    referenceDate.setDate(referenceDate.getDate() + 1);
+    
+    const customerMap = {};
+    
+    data.forEach(row => {
+        const customerId = row.CustomerID;
+        if (!customerMap[customerId]) {
+            customerMap[customerId] = {
+                lastDate: row.InvoiceDate,
+                frequency: 0,
+                monetary: 0
+            };
+        }
+        
+        customerMap[customerId].frequency++;
+        customerMap[customerId].monetary += row.Amount;
+        if (row.InvoiceDate > customerMap[customerId].lastDate) {
+            customerMap[customerId].lastDate = row.InvoiceDate;
+        }
     });
     
-    console.log('Preprocessed data sample:', processed.slice(0, 3));
-    return processed;
-}
-
-// ... rest of the functions remain the same (calculateRFM, performSegmentation, displayResults, etc.)
-
-// Enhanced error handling and loading functions
-function showLoading(message) {
-    // Create a loading overlay
-    let loadingDiv = document.getElementById('loading-overlay');
-    if (!loadingDiv) {
-        loadingDiv = document.createElement('div');
-        loadingDiv.id = 'loading-overlay';
-        loadingDiv.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            font-size: 18px;
-        `;
-        document.body.appendChild(loadingDiv);
+    const rfm = [];
+    for (const [customerId, stats] of Object.entries(customerMap)) {
+        const recency = Math.floor((referenceDate - stats.lastDate) / (1000 * 60 * 60 * 24));
+        rfm.push({
+            CustomerID: customerId,
+            Recency: recency,
+            Frequency: stats.frequency,
+            Monetary: stats.monetary
+        });
     }
     
-    loadingDiv.innerHTML = `
-        <div style="text-align: center;">
-            <div class="loading" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
-            <div>${message}</div>
-        </div>
-    `;
-    loadingDiv.style.display = 'flex';
+    return rfm;
 }
 
-function hideLoading() {
-    const loadingDiv = document.getElementById('loading-overlay');
-    if (loadingDiv) {
-        loadingDiv.style.display = 'none';
-    }
+function performSegmentation(rfmData) {
+    // Simple segmentation based on percentiles
+    const segments = rfmData.map(customer => {
+        const segment = calculateSegment(customer.Recency, customer.Frequency, customer.Monetary);
+        return {
+            ...customer,
+            Segment: segment
+        };
+    });
+    
+    return segments;
 }
 
-function showError(message) {
-    // Create a nice error notification
-    const errorDiv = document.createElement('div');
-    errorDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #e74c3c;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 5px;
-        z-index: 1001;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        max-width: 400px;
-    `;
-    errorDiv.innerHTML = `
-        <strong>Error:</strong> ${message}
-        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; margin-left: 10px; cursor: pointer;">×</button>
-    `;
+function calculateSegment(recency, frequency, monetary) {
+    // Simple scoring system
+    let score = 0;
     
-    document.body.appendChild(errorDiv);
+    // Recency: lower is better
+    if (recency <= 30) score += 3;
+    else if (recency <= 90) score += 2;
+    else score += 1;
     
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (errorDiv.parentElement) {
-            errorDiv.remove();
+    // Frequency: higher is better
+    if (frequency >= 10) score += 3;
+    else if (frequency >= 5) score += 2;
+    else score += 1;
+    
+    // Monetary: higher is better
+    if (monetary >= 500) score += 3;
+    else if (monetary >= 100) score += 2;
+    else score += 1;
+    
+    // Assign segments based on total score
+    if (score >= 8) return 'Platinum';
+    if (score >= 6) return 'Gold';
+    if (score >= 4) return 'Silver';
+    return 'Bronze';
+}
+
+function displayResults(segments) {
+    // Update metrics
+    document.getElementById('total-customers').textContent = segments.length;
+    document.getElementById('total-revenue').textContent = 
+        '$' + segments.reduce((sum, c) => sum + c.Monetary, 0).toFixed(2);
+    document.getElementById('avg-frequency').textContent = 
+        (segments.reduce((sum, c) => sum + c.Frequency, 0) / segments.length).toFixed(1);
+    
+    // Create segment distribution
+    createSegmentChart(segments);
+    
+    // Show segment table
+    showSegmentTable(segments);
+    
+    // Show recommendations
+    showRecommendations(segments);
+}
+
+function createSegmentChart(segments) {
+    const counts = {
+        Platinum: 0, Gold: 0, Silver: 0, Bronze: 0
+    };
+    
+    segments.forEach(c => counts[c.Segment]++);
+    
+    const ctx = document.getElementById('segment-pie-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(counts),
+            datasets: [{
+                data: Object.values(counts),
+                backgroundColor: ['#FFD700', '#C0C0C0', '#CD7F32', '#8B4513']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Customer Segments'
+                }
+            }
         }
-    }, 5000);
+    });
 }
 
-// Add CSS for data preview
-const style = document.createElement('style');
-style.textContent = `
-    .data-preview {
-        margin-top: 15px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        padding: 10px;
-        background: #f9f9f9;
+function showSegmentTable(segments) {
+    const segmentStats = {};
+    
+    segments.forEach(customer => {
+        const segment = customer.Segment;
+        if (!segmentStats[segment]) {
+            segmentStats[segment] = {
+                count: 0,
+                totalRecency: 0,
+                totalFrequency: 0,
+                totalMonetary: 0
+            };
+        }
+        segmentStats[segment].count++;
+        segmentStats[segment].totalRecency += customer.Recency;
+        segmentStats[segment].totalFrequency += customer.Frequency;
+        segmentStats[segment].totalMonetary += customer.Monetary;
+    });
+    
+    let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">';
+    html += '<tr style="background: #3498db; color: white;">';
+    html += '<th style="padding: 10px; border: 1px solid #ddd;">Segment</th>';
+    html += '<th style="padding: 10px; border: 1px solid #ddd;">Customers</th>';
+    html += '<th style="padding: 10px; border: 1px solid #ddd;">Avg Recency</th>';
+    html += '<th style="padding: 10px; border: 1px solid #ddd;">Avg Frequency</th>';
+    html += '<th style="padding: 10px; border: 1px solid #ddd;">Avg Monetary</th>';
+    html += '</tr>';
+    
+    for (const [segment, stats] of Object.entries(segmentStats)) {
+        html += `<tr style="background: ${segment === 'Platinum' ? '#fffacd' : segment === 'Gold' ? '#fff8dc' : segment === 'Silver' ? '#f8f8ff' : '#f5f5dc'};">`;
+        html += `<td style="padding: 10px; border: 1px solid #ddd;"><strong>${segment}</strong></td>`;
+        html += `<td style="padding: 10px; border: 1px solid #ddd;">${stats.count}</td>`;
+        html += `<td style="padding: 10px; border: 1px solid #ddd;">${(stats.totalRecency / stats.count).toFixed(0)} days</td>`;
+        html += `<td style="padding: 10px; border: 1px solid #ddd;">${(stats.totalFrequency / stats.count).toFixed(1)}</td>`;
+        html += `<td style="padding: 10px; border: 1px solid #ddd;">$${(stats.totalMonetary / stats.count).toFixed(2)}</td>`;
+        html += '</tr>';
     }
     
-    .data-preview table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 12px;
+    html += '</table>';
+    document.getElementById('segment-table').innerHTML = html;
+}
+
+function showRecommendations(segments) {
+    const recommendations = {
+        'Platinum': [
+            "VIP treatment and exclusive offers",
+            "Personalized customer service",
+            "Early access to new products"
+        ],
+        'Gold': [
+            "Loyalty program benefits",
+            "Special discounts and promotions",
+            "Personalized recommendations"
+        ],
+        'Silver': [
+            "Welcome back campaigns",
+            "Educational content",
+            "Re-engagement offers"
+        ],
+        'Bronze': [
+            "Win-back campaigns",
+            "Special discount offers",
+            "Feedback requests"
+        ]
+    };
+    
+    let html = '';
+    for (const [segment, tips] of Object.entries(recommendations)) {
+        html += `<div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #3498db;">`;
+        html += `<h4 style="color: #2c3e50; margin-bottom: 10px;">${segment} Customers</h4>`;
+        html += '<ul style="margin: 0; padding-left: 20px;">';
+        tips.forEach(tip => {
+            html += `<li style="margin-bottom: 5px;">${tip}</li>`;
+        });
+        html += '</ul></div>';
     }
     
-    .data-preview th, .data-preview td {
-        border: 1px solid #ddd;
-        padding: 5px;
-        text-align: left;
-    }
-    
-    .data-preview th {
-        background: #3498db;
-        color: white;
-    }
-    
-    .data-preview tr:nth-child(even) {
-        background: #f2f2f2;
-    }
-`;
-document.head.appendChild(style);
+    document.getElementById('recommendations').innerHTML = html;
+}
