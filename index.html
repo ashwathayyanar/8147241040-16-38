@@ -39,37 +39,32 @@
             </div>
         </section>
 
-        <!-- Configuration Section -->
-        <section class="config-section" style="display: none;">
-            <h2>⚙️ Column Configuration</h2>
-            <div class="config-grid">
-                <div class="config-item">
-                    <label>Customer ID Column</label>
-                    <select id="customer-col">
-                        <option value="">Select column...</option>
-                    </select>
-                </div>
-                <div class="config-item">
-                    <label>Date Column</label>
-                    <select id="date-col">
-                        <option value="">Select column...</option>
-                    </select>
-                </div>
-                <div class="config-item">
-                    <label>Quantity Column</label>
-                    <select id="quantity-col">
-                        <option value="">Select column...</option>
-                    </select>
-                </div>
-                <div class="config-item">
-                    <label>Price Column</label>
-                    <select id="price-col">
-                        <option value="">Select column...</option>
-                    </select>
-                </div>
-            </div>
-            <button id="analyze-btn" class="analyze-btn">🚀 Analyze Data</button>
-        </section>
+      <!-- Configuration Section -->
+<section class="config-section" style="display: none;">
+    <h2>⚙️ Column Configuration</h2>
+    <p>Select which columns to use for analysis:</p>
+    <div class="config-grid">
+        <div class="config-item">
+            <label>Customer ID Column *</label>
+            <select id="customer-col">
+                <option value="">Select column...</option>
+            </select>
+        </div>
+        <div class="config-item">
+            <label>Date Column (optional)</label>
+            <select id="date-col">
+                <option value="">Select column...</option>
+            </select>
+        </div>
+        <div class="config-item">
+            <label>Amount Column (optional)</label>
+            <select id="amount-col">
+                <option value="">Select column...</option>
+            </select>
+        </div>
+    </div>
+    <button id="analyze-btn" class="analyze-btn">🚀 Analyze Data</button>
+</section>
 
         <!-- Results Section -->
         <section id="results-section" style="display: none;">
@@ -225,3 +220,4 @@
 </body>
 
 </html>
+
