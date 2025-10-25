@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Segmentation Analytics</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ml-kmeans@6.0.0/dist/ml-kmeans.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="main-header">
+            <h1>🎯 Customer Segmentation Analytics</h1>
+            <p>Upload your customer transaction data to segment customers using RFM analysis</p>
+        </header>
+
+        <!-- File Upload Section -->
+        <section class="upload-section">
+            <div class="upload-box">
+                <h2>📁 Upload Your Data</h2>
+                <div class="upload-options">
+                    <div class="upload-option">
+                        <label for="file-upload" class="upload-btn">
+                            📄 Upload CSV/Excel File
+                        </label>
+                        <input type="file" id="file-upload" accept=".csv,.xlsx,.xls" style="display: none;">
+                    </div>
+                    <div class="upload-option">
+                        <input type="text" id="url-input" placeholder="🔗 Or enter dataset URL">
+                        <button id="load-url-btn">Load from URL</button>
+                    </div>
+                </div>
+                <div id="file-info" class="file-info"></div>
+            </div>
+        </section>
+
+        <!-- Configuration Section -->
+        <section class="config-section" style="display: none;">
+            <h2>⚙️ Column Configuration</h2>
+            <div class="config-grid">
+                <div class="config-item">
+                    <label>Customer ID Column</label>
+                    <select id="customer-col">
+                        <option value="">Select column...</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Date Column</label>
+                    <select id="date-col">
+                        <option value="">Select column...</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Quantity Column</label>
+                    <select id="quantity-col">
+                        <option value="">Select column...</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Price Column</label>
+                    <select id="price-col">
+                        <option value="">Select column...</option>
+                    </select>
+                </div>
+            </div>
+            <button id="analyze-btn" class="analyze-btn">🚀 Analyze Data</button>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-section" style="display: none;">
+            <!-- RFM Analysis -->
+            <div class="results-section">
+                <h2>📈 RFM Analysis Results</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="total-customers">0</div>
+                        <div class="metric-label">Total Customers</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="total-revenue">$0</div>
+                        <div class="metric-label">Total Revenue</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="avg-frequency">0.0</div>
+                        <div class="metric-label">Avg Transactions</div>
+                    </div>
+                </div>
+
+                <!-- RFM Distributions -->
+                <div class="chart-section">
+                    <h3>RFM Distributions</h3>
+                    <div class="chart-grid">
+                        <div class="chart-container">
+                            <canvas id="recency-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="frequency-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="monetary-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Segmentation -->
+            <div class="results-section">
+                <h2>🎯 Customer Segmentation</h2>
+                <div class="segmentation-results">
+                    <div class="segment-distribution">
+                        <h3>Segment Distribution</h3>
+                        <canvas id="segment-pie-chart"></canvas>
+                    </div>
+                    <div class="segment-profiles">
+                        <h3>Segment Profiles</h3>
+                        <div id="segment-table" class="segment-table"></div>
+                    </div>
+                </div>
+
+                <!-- RFM by Segment -->
+                <div class="chart-section">
+                    <h3>RFM Values by Segment</h3>
+                    <canvas id="rfm-segment-chart"></canvas>
+                </div>
+
+                <!-- Scatter Plot -->
+                <div class="chart-section">
+                    <h3>Customer Segments Visualization</h3>
+                    <canvas id="segment-scatter-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Business Recommendations -->
+            <div class="results-section">
+                <h2>💡 Business Recommendations</h2>
+                <div id="recommendations" class="recommendations-grid"></div>
+            </div>
+
+            <!-- Download Results -->
+            <div class="results-section">
+                <h2>📥 Download Results</h2>
+                <button id="download-btn" class="download-btn">Download Customer Segments CSV</button>
+            </div>
+        </section>
+
+        <!-- Welcome Section -->
+        <section id="welcome-section">
+            <div class="welcome-content">
+                <div class="welcome-text">
+                    <h2>🚀 Get Started</h2>
+                    <p>To begin your customer segmentation analysis:</p>
+                    <ol>
+                        <li><strong>Upload your data</strong> using the upload section above</li>
+                        <li><strong>Configure column mappings</strong> if auto-detection fails</li>
+                        <li><strong>View automated insights</strong> and customer segments</li>
+                        <li><strong>Download results</strong> for further analysis</li>
+                    </ol>
+
+                    <h3>📋 Supported Data Formats</h3>
+                    <ul>
+                        <li>CSV files (.csv)</li>
+                        <li>Excel files (.xlsx, .xls)</li>
+                        <li>Direct URLs to datasets</li>
+                    </ul>
+
+                    <h3>🎯 What You'll Get</h3>
+                    <ul>
+                        <li>Customer segmentation using RFM analysis</li>
+                        <li>Automated cluster identification</li>
+                        <li>Visualizations and insights</li>
+                        <li>Actionable business recommendations</li>
+                        <li>Downloadable results</li>
+                    </ul>
+                </div>
+
+                <div class="sample-structure">
+                    <h3>📊 Sample Data Structure</h3>
+                    <div class="sample-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>CustomerID</th>
+                                    <th>InvoiceDate</th>
+                                    <th>Quantity</th>
+                                    <th>UnitPrice</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>12345</td>
+                                    <td>2023-01-01</td>
+                                    <td>2</td>
+                                    <td>25.50</td>
+                                    <td>Product A</td>
+                                </tr>
+                                <tr>
+                                    <td>12345</td>
+                                    <td>2023-01-15</td>
+                                    <td>1</td>
+                                    <td>15.00</td>
+                                    <td>Product B</td>
+                                </tr>
+                                <tr>
+                                    <td>67890</td>
+                                    <td>2023-01-20</td>
+                                    <td>3</td>
+                                    <td>10.00</td>
+                                    <td>Product C</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
