@@ -325,6 +325,40 @@ function autoDetectColumns(columns) {
 }
 
 function analyzeData() {
+
+    // Clean up previous analysis
+    cleanupCharts();
+    
+    // Add your existing analyzeData code here, but make it async
+    const analyze = async () => {
+        try {
+            showLoading('Analyzing data...');
+            
+            // Process data in chunks
+            const processedData = await processDataInChunks(currentData, customerCol, dateCol, amountCol);
+            
+            // Calculate RFM
+            rfmData = await calculateRFM(processedData, customerCol, dateCol, amountCol);
+            
+            // Perform segmentation
+            segmentData = performSegmentation(rfmData);
+            
+            // Display results
+            displayResults(segmentData);
+            
+            document.getElementById('results-section').style.display = 'block';
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+            
+        } catch (error) {
+            console.error('Analysis error:', error);
+            showError('Analysis error: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    };
+    
+    analyze();
+}
     if (!currentData) {
         showError('No data loaded. Please upload a file first.');
         return;
@@ -337,6 +371,14 @@ function analyzeData() {
     if (!customerCol) {
         showError('Please select Customer ID column');
         return;
+    }
+    
+    const MAX_ROWS = 50000;
+    if (currentData.length > MAX_ROWS) {
+        if (!confirm(`Your dataset has ${currentData.length.toLocaleString()} rows. For better performance, we'll analyze the first ${MAX_ROWS.toLocaleString()} rows. Continue?`)) {
+            return;
+        }
+        currentData = currentData.slice(0, MAX_ROWS);
     }
 
     console.log('Starting analysis with:', { customerCol, dateCol, amountCol });
@@ -376,16 +418,31 @@ function analyzeData() {
 }
 
 function processData(data, customerCol, dateCol, amountCol) {
-    return data.map(row => {
-        const processed = {
-            CustomerID: String(row[customerCol] || 'Unknown').trim(),
-            InvoiceDate: dateCol ? parseDate(row[dateCol]) : new Date(),
-            Amount: amountCol ? parseFloat(row[amountCol]) || 0 : 1
-        };
-        return processed;
-    }).filter(row => row.CustomerID && row.CustomerID !== 'Unknown' && row.CustomerID !== '');
+    const processed = [];
+    const chunkSize = 2000;
+    
+    for (let i = 0; i < data.length; i += chunkSize) {
+        const chunk = data.slice(i, i + chunkSize);
+        
+        for (const row of chunk) {
+            const customerId = String(row[customerCol] || 'Unknown').trim();
+            if (customerId && customerId !== 'Unknown' && customerId !== '') {
+                processed.push({
+                    CustomerID: customerId,
+                    InvoiceDate: dateCol ? parseDate(row[dateCol]) : new Date(),
+                    Amount: amountCol ? parseFloat(row[amountCol]) || 0 : 1
+                });
+            }
+        }
+        
+        // Prevent blocking
+        if (i % 10000 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
+    }
+    
+    return processed;
 }
-
 function parseDate(dateValue) {
     if (!dateValue) return new Date();
     
@@ -398,30 +455,43 @@ function parseDate(dateValue) {
 }
 
 function calculateRFM(data, customerCol, dateCol, amountCol) {
-    const referenceDate = new Date(Math.max(...data.map(row => row.InvoiceDate.getTime())));
-    referenceDate.setDate(referenceDate.getDate() + 1);
+    const referenceDate = new Date();
     
-    const customerMap = {};
+    // Use Map for better performance with large datasets
+    const customerMap = new Map();
     
-    data.forEach(row => {
-        const customerId = row.CustomerID;
-        if (!customerMap[customerId]) {
-            customerMap[customerId] = {
-                lastDate: row.InvoiceDate,
-                frequency: 0,
-                monetary: 0
-            };
+    // Process data in chunks to avoid stack overflow
+    const chunkSize = 1000;
+    for (let i = 0; i < data.length; i += chunkSize) {
+        const chunk = data.slice(i, i + chunkSize);
+        
+        for (const row of chunk) {
+            const customerId = row.CustomerID;
+            if (!customerMap.has(customerId)) {
+                customerMap.set(customerId, {
+                    lastDate: row.InvoiceDate,
+                    frequency: 0,
+                    monetary: 0
+                });
+            }
+            
+            const stats = customerMap.get(customerId);
+            stats.frequency++;
+            stats.monetary += row.Amount;
+            if (row.InvoiceDate > stats.lastDate) {
+                stats.lastDate = row.InvoiceDate;
+            }
         }
         
-        customerMap[customerId].frequency++;
-        customerMap[customerId].monetary += row.Amount;
-        if (row.InvoiceDate > customerMap[customerId].lastDate) {
-            customerMap[customerId].lastDate = row.InvoiceDate;
+        // Yield to main thread periodically
+        if (i % 5000 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 0));
         }
-    });
+    }
     
+    // Convert Map to array
     const rfm = [];
-    for (const [customerId, stats] of Object.entries(customerMap)) {
+    for (const [customerId, stats] of customerMap.entries()) {
         const recency = Math.floor((referenceDate - stats.lastDate) / (1000 * 60 * 60 * 24));
         rfm.push({
             CustomerID: customerId,
@@ -433,7 +503,6 @@ function calculateRFM(data, customerCol, dateCol, amountCol) {
     
     return rfm;
 }
-
 function performSegmentation(rfmData) {
     // Simple segmentation based on percentiles
     const recencies = rfmData.map(c => c.Recency);
@@ -565,30 +634,68 @@ function createHistogramChart(canvasId, data, title, xLabel, yLabel, bins = 15) 
     });
 }
 
-function createSegmentChart(segments) {
-    const counts = { Platinum: 0, Gold: 0, Silver: 0, Bronze: 0 };
-    segments.forEach(c => counts[c.Segment]++);
+function createHistogramChart(canvasId, data, title, xLabel, yLabel, bins = 15) {
+    // Limit data points for large datasets
+    const displayData = data.length > 10000 ? 
+        sampleData(data, 10000) : data;
     
-    const ctx = document.getElementById('segment-pie-chart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
+    const min = Math.min(...displayData);
+    const max = Math.max(...displayData);
+    const binSize = (max - min) / bins;
+    
+    const histogram = new Array(bins).fill(0);
+    for (let i = 0; i < displayData.length; i++) {
+        const binIndex = Math.min(Math.floor((displayData[i] - min) / binSize), bins - 1);
+        histogram[binIndex]++;
+    }
+    
+    const labels = Array.from({ length: bins }, (_, i) => 
+        Math.floor(min + i * binSize)
+    );
+    
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // Destroy previous chart if it exists
+    if (window[canvasId + 'Chart']) {
+        window[canvasId + 'Chart'].destroy();
+    }
+    
+    window[canvasId + 'Chart'] = new Chart(ctx, {
+        type: 'bar',
         data: {
-            labels: Object.keys(counts),
+            labels: labels,
             datasets: [{
-                data: Object.values(counts),
-                backgroundColor: ['#FFD700', '#C0C0C0', '#CD7F32', '#8B4513']
+                label: yLabel,
+                data: histogram,
+                backgroundColor: canvasId === 'recency-chart' ? 'rgba(52, 152, 219, 0.7)' :
+                              canvasId === 'frequency-chart' ? 'rgba(46, 204, 113, 0.7)' :
+                              'rgba(231, 76, 60, 0.7)'
             }]
         },
         options: {
             responsive: true,
             plugins: {
-                title: { display: true, text: 'Customer Segment Distribution' },
-                legend: { position: 'bottom' }
+                title: { display: true, text: title }
+            },
+            scales: {
+                x: { title: { display: true, text: xLabel } },
+                y: { title: { display: true, text: yLabel } }
             }
         }
     });
 }
 
+// Helper function to sample data
+function sampleData(data, maxSamples) {
+    if (data.length <= maxSamples) return data;
+    
+    const sampled = [];
+    const step = data.length / maxSamples;
+    for (let i = 0; i < data.length; i += step) {
+        sampled.push(data[Math.floor(i)]);
+    }
+    return sampled;
+}
 function showSegmentTable(segments) {
     const segmentStats = {};
     
@@ -714,8 +821,7 @@ function downloadResults() {
     window.URL.revokeObjectURL(url);
 }
 
-// Utility functions
-function showLoading(message) {
+function showLoading(message, progress = null) {
     let loadingDiv = document.getElementById('loading-overlay');
     if (!loadingDiv) {
         loadingDiv = document.createElement('div');
@@ -736,6 +842,15 @@ function showLoading(message) {
         `;
         document.body.appendChild(loadingDiv);
     }
+    
+    const progressText = progress !== null ? ` (${progress}%)` : '';
+    loadingDiv.innerHTML = `
+        <div style="text-align: center;">
+            <div class="loading" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+            <div>${message}${progressText}</div>
+        </div>
+    `;
+
     
     loadingDiv.innerHTML = `
         <div style="text-align: center;">
@@ -767,4 +882,22 @@ function hideLoading() {
 
 function showError(message) {
     alert('❌ ' + message);
+}
+function cleanupCharts() {
+    const chartIds = [
+        'recency-chart', 'frequency-chart', 'monetary-chart',
+        'segment-pie-chart', 'rfm-segment-chart', 'segment-scatter-chart'
+    ];
+    
+    chartIds.forEach(id => {
+        if (window[id + 'Chart']) {
+            window[id + 'Chart'].destroy();
+            window[id + 'Chart'] = null;
+        }
+    });
+    
+    // Clear large datasets
+    currentData = null;
+    rfmData = null;
+    segmentData = null;
 }
