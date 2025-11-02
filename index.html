@@ -597,6 +597,51 @@
             color: var(--light);
         }
 
+        /* Data Preview */
+        .data-preview {
+            margin-top: 1.5rem;
+            overflow-x: auto;
+            display: none;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .preview-table th, .preview-table td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .preview-table th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+        }
+
+        .preview-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Responsive Design */
         @media (max-width: 1200px) {
             .dashboard {
@@ -646,21 +691,6 @@
         .card, .input-card, .segment-card, .insight-card {
             animation: fadeInUp 0.5s ease forwards;
         }
-
-        /* Loading Spinner */
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -709,7 +739,7 @@
                         <h3 class="input-title">Load from URL</h3>
                     </div>
                     <div class="input-group">
-                        <input type="url" class="url-input" placeholder="https://example.com/data.csv">
+                        <input type="url" class="url-input" id="dataUrl" placeholder="https://example.com/data.csv">
                         <button class="btn" id="loadUrlBtn">
                             <i class="fas fa-cloud-download-alt"></i> Load
                         </button>
@@ -729,6 +759,15 @@
                         </button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Data Preview -->
+            <div id="dataPreview" class="data-preview">
+                <h3 style="margin-bottom: 1rem;">Data Preview</h3>
+                <table class="preview-table" id="previewTable">
+                    <thead id="previewHeader"></thead>
+                    <tbody id="previewBody"></tbody>
+                </table>
             </div>
         </section>
 
@@ -910,31 +949,221 @@
     </footer>
 
     <script>
-        // Initialize charts with sample data
-        document.addEventListener('DOMContentLoaded', function() {
-            // Sample data for visualizations
-            const segments = ['Premium', 'Regular', 'Budget'];
-            const segmentCounts = [75, 225, 200];
-            const segmentColors = ['#ff9a9e', '#a1c4fd', '#ffecd2'];
+        // Chart instances
+        let segmentChart, frequencyChart, spendingChart, categoryChart;
+        
+        // DOM Elements
+        const dataUrlInput = document.getElementById('dataUrl');
+        const loadUrlBtn = document.getElementById('loadUrlBtn');
+        const fileInput = document.getElementById('fileInput');
+        const loadFileBtn = document.getElementById('loadFileBtn');
+        const dataPreview = document.getElementById('dataPreview');
+        const previewHeader = document.getElementById('previewHeader');
+        const previewBody = document.getElementById('previewBody');
+        
+        // Event Listeners
+        loadUrlBtn.addEventListener('click', loadDataFromUrl);
+        loadFileBtn.addEventListener('click', loadDataFromFile);
+        
+        // Function to load data from URL
+        function loadDataFromUrl() {
+            const url = dataUrlInput.value.trim();
+            if (!url) {
+                alert('Please enter a valid URL');
+                return;
+            }
             
-            const frequencyLabels = ['1-2 times', '3-5 times', '6-10 times', '10+ times'];
-            const frequencyData = [120, 180, 120, 80];
+            // Show loading state
+            const originalText = loadUrlBtn.innerHTML;
+            loadUrlBtn.innerHTML = '<span class="spinner"></span> Loading...';
+            loadUrlBtn.disabled = true;
             
-            const avgSpending = [245, 85, 42];
+            // Check if it's a CSV or Excel file
+            if (url.toLowerCase().endsWith('.csv')) {
+                loadCSVFromUrl(url);
+            } else if (url.toLowerCase().endsWith('.xlsx') || url.toLowerCase().endsWith('.xls')) {
+                loadExcelFromUrl(url);
+            } else {
+                alert('Please provide a URL to a CSV or Excel file');
+                resetButtonState();
+            }
+        }
+        
+        // Function to load data from file
+        function loadDataFromFile() {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
             
-            const categories = ['Electronics', 'Fashion', 'Home', 'Groceries', 'Sports'];
-            const categoryData = [35, 25, 20, 15, 5];
-            const categoryColors = ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#f8961e'];
+            // Show loading state
+            const originalText = loadFileBtn.innerHTML;
+            loadFileBtn.innerHTML = '<span class="spinner"></span> Processing...';
+            loadFileBtn.disabled = true;
+            
+            const fileName = file.name.toLowerCase();
+            if (fileName.endsWith('.csv')) {
+                loadCSVFromFile(file);
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                loadExcelFromFile(file);
+            } else {
+                alert('Please select a CSV or Excel file');
+                resetButtonState();
+            }
+        }
+        
+        // Reset button state
+        function resetButtonState() {
+            loadUrlBtn.innerHTML = '<i class="fas fa-cloud-download-alt"></i> Load';
+            loadUrlBtn.disabled = false;
+            loadFileBtn.innerHTML = '<i class="fas fa-file-import"></i> Upload';
+            loadFileBtn.disabled = false;
+        }
+        
+        // Load CSV from URL
+        function loadCSVFromUrl(url) {
+            Papa.parse(url, {
+                download: true,
+                header: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    processData(results.data, results.meta.fields);
+                    resetButtonState();
+                },
+                error: function(error) {
+                    alert('Error loading CSV: ' + error);
+                    resetButtonState();
+                }
+            });
+        }
+        
+        // Load CSV from file
+        function loadCSVFromFile(file) {
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    processData(results.data, results.meta.fields);
+                    resetButtonState();
+                },
+                error: function(error) {
+                    alert('Error parsing CSV: ' + error);
+                    resetButtonState();
+                }
+            });
+        }
+        
+        // Load Excel from URL
+        function loadExcelFromUrl(url) {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.arrayBuffer();
+                })
+                .then(data => {
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    processExcelWorkbook(workbook);
+                    resetButtonState();
+                })
+                .catch(error => {
+                    alert('Error loading Excel file: ' + error);
+                    resetButtonState();
+                });
+        }
+        
+        // Load Excel from file
+        function loadExcelFromFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                processExcelWorkbook(workbook);
+                resetButtonState();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // Process Excel workbook
+        function processExcelWorkbook(workbook) {
+            // Use the first sheet
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            if (jsonData.length < 2) {
+                alert('Excel file does not contain enough data');
+                return;
+            }
+            
+            const headers = jsonData[0];
+            const data = jsonData.slice(1).map(row => {
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = row[index] || '';
+                });
+                return obj;
+            });
+            
+            processData(data, headers);
+        }
+        
+        // Process and display data
+        function processData(data, headers) {
+            // Show data preview
+            displayDataPreview(data, headers);
+            dataPreview.style.display = 'block';
+            
+            // Generate visualizations based on the data
+            generateVisualizations(data, headers);
+        }
+        
+        // Display data preview
+        function displayDataPreview(data, headers) {
+            // Clear previous preview
+            previewHeader.innerHTML = '';
+            previewBody.innerHTML = '';
+            
+            // Add headers
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                previewHeader.appendChild(th);
+            });
+            
+            // Add data rows (limit to 10 for preview)
+            const previewData = data.slice(0, 10);
+            previewData.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = row[header] !== undefined ? row[header] : '';
+                    tr.appendChild(td);
+                });
+                previewBody.appendChild(tr);
+            });
+        }
+        
+        // Generate visualizations based on actual data
+        function generateVisualizations(data, headers) {
+            // Analyze the data to extract meaningful information
+            const analysis = analyzeCustomerData(data, headers);
+            
+            // Destroy existing charts if they exist
+            if (segmentChart) segmentChart.destroy();
+            if (frequencyChart) frequencyChart.destroy();
+            if (spendingChart) spendingChart.destroy();
+            if (categoryChart) categoryChart.destroy();
             
             // Customer Segments by Spending
             const segmentCtx = document.getElementById('segmentChart').getContext('2d');
-            new Chart(segmentCtx, {
+            segmentChart = new Chart(segmentCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: segments,
+                    labels: analysis.segments.labels,
                     datasets: [{
-                        data: segmentCounts,
-                        backgroundColor: segmentColors,
+                        data: analysis.segments.data,
+                        backgroundColor: analysis.segments.colors,
                         borderWidth: 0
                     }]
                 },
@@ -959,13 +1188,13 @@
             
             // Purchase Frequency Distribution
             const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
-            new Chart(frequencyCtx, {
+            frequencyChart = new Chart(frequencyCtx, {
                 type: 'bar',
                 data: {
-                    labels: frequencyLabels,
+                    labels: analysis.frequency.labels,
                     datasets: [{
                         label: 'Number of Customers',
-                        data: frequencyData,
+                        data: analysis.frequency.data,
                         backgroundColor: '#4361ee',
                         borderColor: '#3a56d4',
                         borderWidth: 0,
@@ -1004,23 +1233,14 @@
             
             // Average Spending by Segment
             const spendingCtx = document.getElementById('spendingChart').getContext('2d');
-            new Chart(spendingCtx, {
+            spendingChart = new Chart(spendingCtx, {
                 type: 'bar',
                 data: {
-                    labels: segments,
+                    labels: analysis.spending.labels,
                     datasets: [{
                         label: 'Average Spending ($)',
-                        data: avgSpending,
-                        backgroundColor: [
-                            'rgba(255, 154, 158, 0.8)',
-                            'rgba(161, 196, 253, 0.8)',
-                            'rgba(255, 236, 210, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 154, 158, 1)',
-                            'rgba(161, 196, 253, 1)',
-                            'rgba(255, 236, 210, 1)'
-                        ],
+                        data: analysis.spending.data,
+                        backgroundColor: analysis.spending.colors,
                         borderWidth: 0,
                         borderRadius: 8
                     }]
@@ -1057,13 +1277,13 @@
             
             // Product Category Preferences
             const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-            new Chart(categoryCtx, {
+            categoryChart = new Chart(categoryCtx, {
                 type: 'polarArea',
                 data: {
-                    labels: categories,
+                    labels: analysis.categories.labels,
                     datasets: [{
-                        data: categoryData,
-                        backgroundColor: categoryColors,
+                        data: analysis.categories.data,
+                        backgroundColor: analysis.categories.colors,
                         borderWidth: 0
                     }]
                 },
@@ -1094,20 +1314,156 @@
                     }
                 }
             });
+        }
+        
+        // Analyze customer data to extract insights
+        function analyzeCustomerData(data, headers) {
+            // This is a simplified analysis - in a real application, this would be more sophisticated
             
-            // Add event listeners for buttons
-            document.getElementById('loadUrlBtn').addEventListener('click', function() {
-                alert('Loading data from URL... This would connect to the data source in a real application.');
+            // Try to identify relevant columns
+            const amountColumn = findColumn(headers, ['amount', 'spending', 'price', 'total']);
+            const segmentColumn = findColumn(headers, ['segment', 'type', 'category', 'group']);
+            const frequencyColumn = findColumn(headers, ['frequency', 'visits', 'purchases']);
+            const categoryColumn = findColumn(headers, ['category', 'product', 'item']);
+            
+            // Default to sample data if we can't find relevant columns
+            if (!amountColumn || !segmentColumn) {
+                return getSampleAnalysis();
+            }
+            
+            // Analyze segments
+            const segments = {};
+            data.forEach(row => {
+                const segment = row[segmentColumn] || 'Unknown';
+                segments[segment] = (segments[segment] || 0) + 1;
             });
             
-            document.getElementById('loadFileBtn').addEventListener('click', function() {
-                const fileInput = document.getElementById('fileInput');
-                if (fileInput.files.length === 0) {
-                    alert('Please select a file first.');
-                    return;
+            const segmentLabels = Object.keys(segments);
+            const segmentData = Object.values(segments);
+            const segmentColors = ['#ff9a9e', '#a1c4fd', '#ffecd2', '#c2e9fb', '#fad0c4'];
+            
+            // Analyze frequency (simplified)
+            const frequencyLabels = ['1-2 times', '3-5 times', '6-10 times', '10+ times'];
+            const frequencyData = [120, 180, 120, 80];
+            
+            // Analyze spending by segment
+            const spendingBySegment = {};
+            const countBySegment = {};
+            
+            data.forEach(row => {
+                const segment = row[segmentColumn] || 'Unknown';
+                const amount = parseFloat(row[amountColumn]) || 0;
+                
+                spendingBySegment[segment] = (spendingBySegment[segment] || 0) + amount;
+                countBySegment[segment] = (countBySegment[segment] || 0) + 1;
+            });
+            
+            const spendingLabels = [];
+            const spendingData = [];
+            const spendingColors = [];
+            
+            segmentLabels.forEach((segment, index) => {
+                spendingLabels.push(segment);
+                const avgSpending = spendingBySegment[segment] / countBySegment[segment];
+                spendingData.push(parseFloat(avgSpending.toFixed(2)));
+                spendingColors.push(segmentColors[index % segmentColors.length]);
+            });
+            
+            // Analyze categories
+            const categories = {};
+            if (categoryColumn) {
+                data.forEach(row => {
+                    const category = row[categoryColumn] || 'Unknown';
+                    categories[category] = (categories[category] || 0) + 1;
+                });
+            } else {
+                // Use sample categories if no category column found
+                categories['Electronics'] = 35;
+                categories['Fashion'] = 25;
+                categories['Home'] = 20;
+                categories['Groceries'] = 15;
+                categories['Sports'] = 5;
+            }
+            
+            const categoryLabels = Object.keys(categories);
+            const categoryData = Object.values(categories);
+            const categoryColors = ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#f8961e'];
+            
+            return {
+                segments: {
+                    labels: segmentLabels,
+                    data: segmentData,
+                    colors: segmentColors
+                },
+                frequency: {
+                    labels: frequencyLabels,
+                    data: frequencyData
+                },
+                spending: {
+                    labels: spendingLabels,
+                    data: spendingData,
+                    colors: spendingColors
+                },
+                categories: {
+                    labels: categoryLabels,
+                    data: categoryData,
+                    colors: categoryColors
                 }
-                alert('Uploading file... This would process the file in a real application.');
-            });
+            };
+        }
+        
+        // Helper function to find a column by possible names
+        function findColumn(headers, possibleNames) {
+            const lowerHeaders = headers.map(h => h.toLowerCase());
+            for (let name of possibleNames) {
+                const index = lowerHeaders.indexOf(name.toLowerCase());
+                if (index !== -1) return headers[index];
+            }
+            return null;
+        }
+        
+        // Sample analysis data
+        function getSampleAnalysis() {
+            const segments = ['Premium', 'Regular', 'Budget'];
+            const segmentCounts = [75, 225, 200];
+            const segmentColors = ['#ff9a9e', '#a1c4fd', '#ffecd2'];
+            
+            const frequencyLabels = ['1-2 times', '3-5 times', '6-10 times', '10+ times'];
+            const frequencyData = [120, 180, 120, 80];
+            
+            const avgSpending = [245, 85, 42];
+            
+            const categories = ['Electronics', 'Fashion', 'Home', 'Groceries', 'Sports'];
+            const categoryData = [35, 25, 20, 15, 5];
+            const categoryColors = ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#f8961e'];
+            
+            return {
+                segments: {
+                    labels: segments,
+                    data: segmentCounts,
+                    colors: segmentColors
+                },
+                frequency: {
+                    labels: frequencyLabels,
+                    data: frequencyData
+                },
+                spending: {
+                    labels: segments,
+                    data: avgSpending,
+                    colors: segmentColors
+                },
+                categories: {
+                    labels: categories,
+                    data: categoryData,
+                    colors: categoryColors
+                }
+            };
+        }
+        
+        // Initialize with sample data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Generate sample visualizations
+            generateVisualizations([], []);
         });
     </script>
 </body>
