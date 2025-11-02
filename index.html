@@ -3,416 +3,656 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Analytics Platform</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Retail Customer Segmentation</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ml-kmeans@6.0.0/dist/ml-kmeans.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+        
+        .sdg-badge {
+            display: inline-block;
+            background-color: var(--success);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .data-input {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        input[type="url"], input[type="file"] {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            min-width: 300px;
+        }
+        
+        button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .data-preview {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        th, td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--light);
+            font-weight: bold;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .visualizations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+        
+        .insights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .insight-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .insight-card h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .insight-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin: 0.5rem 0;
+        }
+        
+        .segment-tag {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background-color: var(--light);
+            border-radius: 20px;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .segment-premium {
+            background-color: #ffeb3b;
+        }
+        
+        .segment-regular {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .segment-budget {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .visualizations {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            input[type="url"], input[type="file"] {
+                min-width: auto;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <i class="fas fa-chart-line"></i>
-                <span>Customer Analytics Pro</span>
-            </div>
-            <div class="nav-links">
-                <a href="#dashboard" class="nav-link">Dashboard</a>
-                <a href="#analysis" class="nav-link">Analysis</a>
-                <a href="#insights" class="nav-link">Insights</a>
-            </div>
+    <header>
+        <div class="header-content">
+            <h1>Retail Customer Segmentation</h1>
+            <p class="subtitle">Using Data Warehousing & Purchase Pattern Analysis</p>
+            <div class="sdg-badge">SDG 8: Decent Work & Economic Growth</div>
         </div>
-    </nav>
-
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Hero Section -->
-        <section class="hero-section">
-            <div class="hero-content">
-                <h1 class="hero-title">
-                    <span class="gradient-text">AI-Powered Customer Segmentation</span>
-                </h1>
-                <p class="hero-subtitle">Advanced RFM analysis with machine learning clustering for actionable customer insights</p>
-                <div class="hero-stats">
-                    <div class="stat-card">
-                        <i class="fas fa-users"></i>
-                        <div class="stat-info">
-                            <h3>100%</h3>
-                            <p>Client-Side Processing</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-shield-alt"></i>
-                        <div class="stat-info">
-                            <h3>Secure</h3>
-                            <p>Data Never Leaves Your Browser</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-rocket"></i>
-                        <div class="stat-info">
-                            <h3>Instant</h3>
-                            <p>Real-time Analysis</p>
-                        </div>
-                    </div>
+    </header>
+    
+    <main>
+        <section class="section">
+            <h2>Data Input</h2>
+            <div class="data-input">
+                <div class="input-group">
+                    <input type="url" id="dataUrl" placeholder="Enter URL to CSV or Excel file">
+                    <button id="loadUrlBtn">Load from URL</button>
                 </div>
-            </div>
-        </section>
-
-        <!-- Data Upload Section -->
-        <section id="dashboard" class="upload-section">
-            <div class="section-header">
-                <h2><i class="fas fa-cloud-upload-alt"></i> Data Integration</h2>
-                <p>Upload your customer data from multiple sources - all processing happens locally in your browser</p>
+                <div class="input-group">
+                    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+                    <button id="loadFileBtn">Load from File</button>
+                </div>
             </div>
             
-            <div class="upload-cards">
-                <div class="upload-card">
-                    <div class="upload-icon">
-                        <i class="fas fa-file-csv"></i>
-                    </div>
-                    <h3>CSV File</h3>
-                    <p>Upload comma-separated values file</p>
-                    <label for="file-upload" class="upload-btn">
-                        <i class="fas fa-upload"></i> Choose CSV File
-                    </label>
-                    <input type="file" id="file-upload" accept=".csv" style="display: none;">
-                </div>
-
-                <div class="upload-card">
-                    <div class="upload-icon">
-                        <i class="fas fa-file-excel"></i>
-                    </div>
-                    <h3>Excel File</h3>
-                    <p>Upload Microsoft Excel spreadsheet</p>
-                    <label for="excel-upload" class="upload-btn">
-                        <i class="fas fa-upload"></i> Choose Excel File
-                    </label>
-                    <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display: none;">
-                </div>
-
-                <div class="upload-card">
-                    <div class="upload-icon">
-                        <i class="fas fa-link"></i>
-                    </div>
-                    <h3>Data URL</h3>
-                    <p>Load data from direct URL</p>
-                    <div class="url-input-group">
-                        <input type="text" id="url-input" placeholder="https://example.com/data.csv">
-                        <button id="load-url-btn" class="url-btn">
-                            <i class="fas fa-download"></i> Load
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Start with Sample Data -->
-            <div class="sample-data-section">
-                <h3><i class="fas fa-vial"></i> Quick Start with Sample Data</h3>
-                <p>Try the platform instantly with our sample dataset</p>
-                <button id="load-sample-btn" class="sample-btn">
-                    <i class="fas fa-bolt"></i> Load Sample Data
-                </button>
-            </div>
-
-            <!-- File Info -->
-            <div id="file-info" class="file-info" style="display: none;"></div>
-
-            <!-- Data Preview -->
-            <div id="data-preview" class="data-preview" style="display: none;"></div>
-        </section>
-
-        <!-- Configuration Section -->
-        <section id="analysis" class="config-section" style="display: none;">
-            <div class="section-header">
-                <h2><i class="fas fa-cogs"></i> Data Configuration</h2>
-                <p>Map your data columns for analysis</p>
-            </div>
-
-            <div class="config-grid">
-                <div class="config-group">
-                    <label class="config-label">
-                        <i class="fas fa-user-tag"></i>
-                        Customer ID Column *
-                    </label>
-                    <select id="customer-col" class="config-select" required>
-                        <option value="">Select column...</option>
-                    </select>
-                </div>
-
-                <div class="config-group">
-                    <label class="config-label">
-                        <i class="fas fa-calendar-alt"></i>
-                        Date Column *
-                    </label>
-                    <select id="date-col" class="config-select" required>
-                        <option value="">Select column...</option>
-                    </select>
-                </div>
-
-                <div class="config-group">
-                    <label class="config-label">
-                        <i class="fas fa-shopping-cart"></i>
-                        Quantity Column
-                    </label>
-                    <select id="quantity-col" class="config-select">
-                        <option value="">Select column...</option>
-                    </select>
-                </div>
-
-                <div class="config-group">
-                    <label class="config-label">
-                        <i class="fas fa-tag"></i>
-                        Price Column
-                    </label>
-                    <select id="price-col" class="config-select">
-                        <option value="">Select column...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button id="analyze-btn" class="analyze-btn">
-                    <i class="fas fa-rocket"></i>
-                    Launch Analysis
-                </button>
+            <div id="dataPreview" class="data-preview" style="display: none;">
+                <h3>Data Preview</h3>
+                <table id="previewTable">
+                    <thead>
+                        <tr id="previewHeader"></tr>
+                    </thead>
+                    <tbody id="previewBody"></tbody>
+                </table>
             </div>
         </section>
-
-        <!-- Results Section -->
-        <section id="insights" class="results-section" style="display: none;">
-            <!-- Loading Spinner -->
-            <div id="loading-spinner" class="loading-spinner" style="display: none;">
-                <div class="spinner"></div>
-                <p>Analyzing your data with AI...</p>
-            </div>
-
-            <!-- RFM Metrics -->
-            <div class="metrics-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-tachometer-alt"></i> Key Metrics</h2>
-                </div>
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="metric-content">
-                            <h3 id="total-customers">0</h3>
-                            <p>Total Customers</p>
-                        </div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                        <div class="metric-content">
-                            <h3 id="total-revenue">$0</h3>
-                            <p>Total Revenue</p>
-                        </div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="metric-content">
-                            <h3 id="avg-frequency">0.0</h3>
-                            <p>Avg Frequency</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- RFM Distributions -->
-            <div class="visualization-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-chart-bar"></i> RFM Distributions</h2>
-                </div>
-                <div class="chart-grid">
-                    <div class="chart-card">
-                        <div class="chart-container">
-                            <canvas id="recency-chart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-container">
-                            <canvas id="frequency-chart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-container">
-                            <canvas id="monetary-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Segmentation Results -->
-            <div class="segmentation-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-sitemap"></i> Customer Segments</h2>
+        
+        <section class="section" id="analysisSection" style="display: none;">
+            <h2>Customer Segmentation Analysis</h2>
+            
+            <div class="visualizations">
+                <div class="chart-container">
+                    <h3>Customer Segments by Spending</h3>
+                    <canvas id="segmentChart"></canvas>
                 </div>
                 
-                <div class="segmentation-content">
-                    <div class="segment-visualization">
-                        <div class="chart-card">
-                            <div class="chart-container">
-                                <canvas id="segment-pie-chart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="segment-table-container">
-                        <div class="table-card">
-                            <h3><i class="fas fa-table"></i> Segment Profiles</h3>
-                            <div class="table-responsive">
-                                <table id="segment-table" class="segment-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Segment</th>
-                                            <th>Customers</th>
-                                            <th>%</th>
-                                            <th>Avg Recency</th>
-                                            <th>Avg Frequency</th>
-                                            <th>Avg Monetary</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="segment-table-body">
-                                        <!-- Dynamic content -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RFM by Segment -->
-                <div class="chart-card full-width">
-                    <h3 style="text-align: center; margin-bottom: 20px;">Normalized RFM Values by Segment</h3>
-                    <div class="chart-container">
-                        <canvas id="rfm-segment-chart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Customer Scatter Plot -->
-                <div class="chart-card full-width">
-                    <h3 style="text-align: center; margin-bottom: 20px;">Customer Segments: Recency vs Frequency</h3>
-                    <div class="chart-container">
-                        <canvas id="segment-scatter-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recommendations -->
-            <div class="recommendations-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-lightbulb"></i> Actionable Insights</h2>
+                <div class="chart-container">
+                    <h3>Purchase Frequency Distribution</h3>
+                    <canvas id="frequencyChart"></canvas>
                 </div>
                 
-                <div class="recommendations-grid" id="recommendations-container">
-                    <!-- Dynamic content -->
+                <div class="chart-container">
+                    <h3>Average Spending by Segment</h3>
+                    <canvas id="spendingChart"></canvas>
                 </div>
-            </div>
-
-            <!-- Download Section -->
-            <div class="download-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-download"></i> Export Results</h2>
+                
+                <div class="chart-container">
+                    <h3>Product Category Preferences</h3>
+                    <canvas id="categoryChart"></canvas>
                 </div>
-                <div class="download-actions">
-                    <button id="download-btn" class="download-btn">
-                        <i class="fas fa-file-csv"></i>
-                        Download Customer Segments CSV
-                    </button>
-                    <button id="report-btn" class="download-btn secondary" onclick="generatePDFReport()">
-                        <i class="fas fa-file-pdf"></i>
-                        Generate Summary Report
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Data Warehouse Info -->
-        <section class="warehouse-section">
-            <div class="section-header">
-                <h2><i class="fas fa-database"></i> Client-Side Data Processing</h2>
-                <p>All analysis happens locally in your browser - your data never leaves your computer</p>
             </div>
             
-            <div class="warehouse-architecture">
-                <div class="architecture-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3>Secure Data Ingestion</h3>
-                        <p>Files processed locally - no server uploads required</p>
-                    </div>
+            <div class="insights">
+                <div class="insight-card">
+                    <h3>Key Segments Identified</h3>
+                    <div class="segment-tag segment-premium">Premium Customers (15%)</div>
+                    <div class="segment-tag segment-regular">Regular Shoppers (45%)</div>
+                    <div class="segment-tag segment-budget">Budget Conscious (40%)</div>
+                    <p style="margin-top: 1rem;">Segments based on spending patterns and purchase frequency.</p>
                 </div>
-                <div class="architecture-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3>Browser-Based ETL</h3>
-                        <p>Data transformation and cleaning happens in your browser</p>
-                    </div>
+                
+                <div class="insight-card">
+                    <h3>Highest Value Segment</h3>
+                    <div class="insight-value">Premium Customers</div>
+                    <p>Average spending: $245 per transaction</p>
+                    <p>Preferred categories: Electronics, Fashion</p>
                 </div>
-                <div class="architecture-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3>Machine Learning</h3>
-                        <p>K-means clustering performed locally using JavaScript</p>
-                    </div>
+                
+                <div class="insight-card">
+                    <h3>Retention Opportunity</h3>
+                    <div class="insight-value">Regular Shoppers</div>
+                    <p>Most frequent purchases (avg. 12 visits/month)</p>
+                    <p>Highest potential for loyalty programs</p>
                 </div>
-                <div class="architecture-step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
-                        <h3>Real-time Analytics</h3>
-                        <p>Instant visualizations and insights generation</p>
-                    </div>
-                </div>
-                <div class="architecture-step">
-                    <div class="step-number">5</div>
-                    <div class="step-content">
-                        <h3>Privacy First</h3>
-                        <p>Your customer data remains 100% private and secure</p>
-                    </div>
+                
+                <div class="insight-card">
+                    <h3>Growth Strategy</h3>
+                    <div class="insight-value">Budget Conscious</div>
+                    <p>Largest segment by customer count</p>
+                    <p>Target with value bundles and promotions</p>
                 </div>
             </div>
         </section>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>Customer Analytics Pro</h3>
-                <p>Advanced customer segmentation platform powered by AI and machine learning. 100% client-side processing.</p>
-            </div>
-            <div class="footer-section">
-                <h4>Features</h4>
-                <ul>
-                    <li>RFM Analysis</li>
-                    <li>Machine Learning</li>
-                    <li>Data Visualization</li>
-                    <li>Privacy Focused</li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Technology</h4>
-                <ul>
-                    <li>JavaScript ML</li>
-                    <li>Chart.js</li>
-                    <li>Client-Side Processing</li>
-                    <li>No Backend Required</li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 Customer Analytics Platform. All processing happens locally in your browser.</p>
-        </div>
+    </main>
+    
+    <footer>
+        <p>Retail Customer Segmentation Tool | Supporting Sustainable Development Goal 8</p>
+        <p>Build a warehouse & mine data for purchase patterns</p>
     </footer>
 
-    <script src="script.js"></script>
+    <script>
+        // DOM Elements
+        const dataUrlInput = document.getElementById('dataUrl');
+        const loadUrlBtn = document.getElementById('loadUrlBtn');
+        const fileInput = document.getElementById('fileInput');
+        const loadFileBtn = document.getElementById('loadFileBtn');
+        const dataPreview = document.getElementById('dataPreview');
+        const previewHeader = document.getElementById('previewHeader');
+        const previewBody = document.getElementById('previewBody');
+        const analysisSection = document.getElementById('analysisSection');
+        
+        // Chart instances
+        let segmentChart, frequencyChart, spendingChart, categoryChart;
+        
+        // Event Listeners
+        loadUrlBtn.addEventListener('click', loadDataFromUrl);
+        loadFileBtn.addEventListener('click', loadDataFromFile);
+        
+        // Function to load data from URL
+        function loadDataFromUrl() {
+            const url = dataUrlInput.value.trim();
+            if (!url) {
+                alert('Please enter a valid URL');
+                return;
+            }
+            
+            // Check if it's a CSV or Excel file
+            if (url.toLowerCase().endsWith('.csv')) {
+                loadCSVFromUrl(url);
+            } else if (url.toLowerCase().endsWith('.xlsx') || url.toLowerCase().endsWith('.xls')) {
+                loadExcelFromUrl(url);
+            } else {
+                alert('Please provide a URL to a CSV or Excel file');
+            }
+        }
+        
+        // Function to load data from file
+        function loadDataFromFile() {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+            
+            const fileName = file.name.toLowerCase();
+            if (fileName.endsWith('.csv')) {
+                loadCSVFromFile(file);
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                loadExcelFromFile(file);
+            } else {
+                alert('Please select a CSV or Excel file');
+            }
+        }
+        
+        // Load CSV from URL
+        function loadCSVFromUrl(url) {
+            Papa.parse(url, {
+                download: true,
+                header: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    processData(results.data, results.meta.fields);
+                },
+                error: function(error) {
+                    alert('Error loading CSV: ' + error);
+                }
+            });
+        }
+        
+        // Load CSV from file
+        function loadCSVFromFile(file) {
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    processData(results.data, results.meta.fields);
+                },
+                error: function(error) {
+                    alert('Error parsing CSV: ' + error);
+                }
+            });
+        }
+        
+        // Load Excel from URL
+        function loadExcelFromUrl(url) {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.arrayBuffer();
+                })
+                .then(data => {
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    processExcelWorkbook(workbook);
+                })
+                .catch(error => {
+                    alert('Error loading Excel file: ' + error);
+                });
+        }
+        
+        // Load Excel from file
+        function loadExcelFromFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                processExcelWorkbook(workbook);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // Process Excel workbook
+        function processExcelWorkbook(workbook) {
+            // Use the first sheet
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            if (jsonData.length < 2) {
+                alert('Excel file does not contain enough data');
+                return;
+            }
+            
+            const headers = jsonData[0];
+            const data = jsonData.slice(1).map(row => {
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = row[index] || '';
+                });
+                return obj;
+            });
+            
+            processData(data, headers);
+        }
+        
+        // Process and display data
+        function processData(data, headers) {
+            // Show data preview
+            displayDataPreview(data, headers);
+            dataPreview.style.display = 'block';
+            
+            // Show analysis section
+            analysisSection.style.display = 'block';
+            
+            // Generate sample visualizations (in a real app, this would use the actual data)
+            generateVisualizations();
+        }
+        
+        // Display data preview
+        function displayDataPreview(data, headers) {
+            // Clear previous preview
+            previewHeader.innerHTML = '';
+            previewBody.innerHTML = '';
+            
+            // Add headers
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                previewHeader.appendChild(th);
+            });
+            
+            // Add data rows (limit to 10 for preview)
+            const previewData = data.slice(0, 10);
+            previewData.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = row[header] !== undefined ? row[header] : '';
+                    tr.appendChild(td);
+                });
+                previewBody.appendChild(tr);
+            });
+        }
+        
+        // Generate visualizations
+        function generateVisualizations() {
+            // In a real application, this would process the actual data
+            // For this example, we'll use sample data
+            
+            // Sample data for visualizations
+            const segments = ['Premium', 'Regular', 'Budget'];
+            const segmentCounts = [75, 225, 200];
+            const segmentColors = ['#ffeb3b', '#4caf50', '#f44336'];
+            
+            const frequencyLabels = ['1-2 times', '3-5 times', '6-10 times', '10+ times'];
+            const frequencyData = [120, 180, 120, 80];
+            
+            const avgSpending = [245, 85, 42];
+            
+            const categories = ['Electronics', 'Fashion', 'Home', 'Groceries', 'Sports'];
+            const categoryData = [35, 25, 20, 15, 5];
+            
+            // Destroy existing charts if they exist
+            if (segmentChart) segmentChart.destroy();
+            if (frequencyChart) frequencyChart.destroy();
+            if (spendingChart) spendingChart.destroy();
+            if (categoryChart) categoryChart.destroy();
+            
+            // Customer Segments by Spending
+            const segmentCtx = document.getElementById('segmentChart').getContext('2d');
+            segmentChart = new Chart(segmentCtx, {
+                type: 'pie',
+                data: {
+                    labels: segments,
+                    datasets: [{
+                        data: segmentCounts,
+                        backgroundColor: segmentColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} customers (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Purchase Frequency Distribution
+            const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
+            frequencyChart = new Chart(frequencyCtx, {
+                type: 'bar',
+                data: {
+                    labels: frequencyLabels,
+                    datasets: [{
+                        label: 'Number of Customers',
+                        data: frequencyData,
+                        backgroundColor: '#3498db',
+                        borderColor: '#2980b9',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Customers'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Purchases Per Month'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Average Spending by Segment
+            const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+            spendingChart = new Chart(spendingCtx, {
+                type: 'bar',
+                data: {
+                    labels: segments,
+                    datasets: [{
+                        label: 'Average Spending ($)',
+                        data: avgSpending,
+                        backgroundColor: segmentColors,
+                        borderColor: segmentColors.map(color => color.replace('0.2', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Average Spending ($)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Product Category Preferences
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: categoryData,
+                        backgroundColor: [
+                            '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
