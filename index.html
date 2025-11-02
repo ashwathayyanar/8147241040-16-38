@@ -1,101 +1,248 @@
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Segmentation Analytics</title>
+    <title>Customer Analytics Platform</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml-kmeans@6.0.0/dist/ml-kmeans.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Header Section -->
-        <header class="main-header">
-            <h1>🎯 Customer Segmentation Analytics</h1>
-            <p>Upload your customer transaction data to segment customers using RFM analysis</p>
-        </header>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-chart-line"></i>
+                <span>Customer Analytics Pro</span>
+            </div>
+            <div class="nav-links">
+                <a href="#dashboard" class="nav-link">Dashboard</a>
+                <a href="#analysis" class="nav-link">Analysis</a>
+                <a href="#insights" class="nav-link">Insights</a>
+            </div>
+        </div>
+    </nav>
 
-        <!-- File Upload Section -->
-        <section class="upload-section">
-            <div class="upload-box">
-                <h2>📁 Upload Your Data</h2>
-                <div class="upload-options">
-                    <div class="upload-option">
-                        <label for="file-upload" class="upload-btn">
-                            📄 Upload CSV/Excel File
-                        </label>
-                        <input type="file" id="file-upload" accept=".csv,.xlsx,.xls" style="display: none;">
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text">AI-Powered Customer Segmentation</span>
+                </h1>
+                <p class="hero-subtitle">Advanced RFM analysis with machine learning clustering for actionable customer insights</p>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="stat-info">
+                            <h3>100%</h3>
+                            <p>Client-Side Processing</p>
+                        </div>
                     </div>
-                    <div class="upload-option">
-                        <input type="text" id="url-input" placeholder="🔗 Or enter dataset URL">
-                        <button id="load-url-btn">Load from URL</button>
+                    <div class="stat-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <div class="stat-info">
+                            <h3>Secure</h3>
+                            <p>Data Never Leaves Your Browser</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-rocket"></i>
+                        <div class="stat-info">
+                            <h3>Instant</h3>
+                            <p>Real-time Analysis</p>
+                        </div>
                     </div>
                 </div>
-                <div id="file-info" class="file-info"></div>
             </div>
         </section>
 
-      <!-- Configuration Section -->
-<section class="config-section" style="display: none;">
-    <h2>⚙️ Column Configuration</h2>
-    <p>Select which columns to use for analysis:</p>
-    <div class="config-grid">
-        <div class="config-item">
-            <label>Customer ID Column *</label>
-            <select id="customer-col">
-                <option value="">Select column...</option>
-            </select>
-        </div>
-        <div class="config-item">
-            <label>Date Column (optional)</label>
-            <select id="date-col">
-                <option value="">Select column...</option>
-            </select>
-        </div>
-        <div class="config-item">
-            <label>Amount Column (optional)</label>
-            <select id="amount-col">
-                <option value="">Select column...</option>
-            </select>
-        </div>
-    </div>
-    <button id="analyze-btn" class="analyze-btn">🚀 Analyze Data</button>
-</section>
-
-        <!-- Results Section -->
-        <section id="results-section" style="display: none;">
-            <!-- RFM Analysis -->
-            <div class="results-section">
-                <h2>📈 RFM Analysis Results</h2>
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-value" id="total-customers">0</div>
-                        <div class="metric-label">Total Customers</div>
+        <!-- Data Upload Section -->
+        <section id="dashboard" class="upload-section">
+            <div class="section-header">
+                <h2><i class="fas fa-cloud-upload-alt"></i> Data Integration</h2>
+                <p>Upload your customer data from multiple sources - all processing happens locally in your browser</p>
+            </div>
+            
+            <div class="upload-cards">
+                <div class="upload-card">
+                    <div class="upload-icon">
+                        <i class="fas fa-file-csv"></i>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-value" id="total-revenue">$0</div>
-                        <div class="metric-label">Total Revenue</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-value" id="avg-frequency">0.0</div>
-                        <div class="metric-label">Avg Transactions</div>
-                    </div>
+                    <h3>CSV File</h3>
+                    <p>Upload comma-separated values file</p>
+                    <label for="file-upload" class="upload-btn">
+                        <i class="fas fa-upload"></i> Choose CSV File
+                    </label>
+                    <input type="file" id="file-upload" accept=".csv" style="display: none;">
                 </div>
 
-                <!-- RFM Distributions -->
-                <div class="chart-section">
-                    <h3>RFM Distributions</h3>
-                    <div class="chart-grid">
+                <div class="upload-card">
+                    <div class="upload-icon">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <h3>Excel File</h3>
+                    <p>Upload Microsoft Excel spreadsheet</p>
+                    <label for="excel-upload" class="upload-btn">
+                        <i class="fas fa-upload"></i> Choose Excel File
+                    </label>
+                    <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display: none;">
+                </div>
+
+                <div class="upload-card">
+                    <div class="upload-icon">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <h3>Data URL</h3>
+                    <p>Load data from direct URL</p>
+                    <div class="url-input-group">
+                        <input type="text" id="url-input" placeholder="https://example.com/data.csv">
+                        <button id="load-url-btn" class="url-btn">
+                            <i class="fas fa-download"></i> Load
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Start with Sample Data -->
+            <div class="sample-data-section">
+                <h3><i class="fas fa-vial"></i> Quick Start with Sample Data</h3>
+                <p>Try the platform instantly with our sample dataset</p>
+                <button id="load-sample-btn" class="sample-btn">
+                    <i class="fas fa-bolt"></i> Load Sample Data
+                </button>
+            </div>
+
+            <!-- File Info -->
+            <div id="file-info" class="file-info" style="display: none;"></div>
+
+            <!-- Data Preview -->
+            <div id="data-preview" class="data-preview" style="display: none;"></div>
+        </section>
+
+        <!-- Configuration Section -->
+        <section id="analysis" class="config-section" style="display: none;">
+            <div class="section-header">
+                <h2><i class="fas fa-cogs"></i> Data Configuration</h2>
+                <p>Map your data columns for analysis</p>
+            </div>
+
+            <div class="config-grid">
+                <div class="config-group">
+                    <label class="config-label">
+                        <i class="fas fa-user-tag"></i>
+                        Customer ID Column *
+                    </label>
+                    <select id="customer-col" class="config-select" required>
+                        <option value="">Select column...</option>
+                    </select>
+                </div>
+
+                <div class="config-group">
+                    <label class="config-label">
+                        <i class="fas fa-calendar-alt"></i>
+                        Date Column *
+                    </label>
+                    <select id="date-col" class="config-select" required>
+                        <option value="">Select column...</option>
+                    </select>
+                </div>
+
+                <div class="config-group">
+                    <label class="config-label">
+                        <i class="fas fa-shopping-cart"></i>
+                        Quantity Column
+                    </label>
+                    <select id="quantity-col" class="config-select">
+                        <option value="">Select column...</option>
+                    </select>
+                </div>
+
+                <div class="config-group">
+                    <label class="config-label">
+                        <i class="fas fa-tag"></i>
+                        Price Column
+                    </label>
+                    <select id="price-col" class="config-select">
+                        <option value="">Select column...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="analyze-btn" class="analyze-btn">
+                    <i class="fas fa-rocket"></i>
+                    Launch Analysis
+                </button>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="insights" class="results-section" style="display: none;">
+            <!-- Loading Spinner -->
+            <div id="loading-spinner" class="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Analyzing your data with AI...</p>
+            </div>
+
+            <!-- RFM Metrics -->
+            <div class="metrics-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Key Metrics</h2>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="total-customers">0</h3>
+                            <p>Total Customers</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="total-revenue">$0</h3>
+                            <p>Total Revenue</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="avg-frequency">0.0</h3>
+                            <p>Avg Frequency</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RFM Distributions -->
+            <div class="visualization-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-bar"></i> RFM Distributions</h2>
+                </div>
+                <div class="chart-grid">
+                    <div class="chart-card">
                         <div class="chart-container">
                             <canvas id="recency-chart"></canvas>
                         </div>
+                    </div>
+                    <div class="chart-card">
                         <div class="chart-container">
                             <canvas id="frequency-chart"></canvas>
                         </div>
+                    </div>
+                    <div class="chart-card">
                         <div class="chart-container">
                             <canvas id="monetary-chart"></canvas>
                         </div>
@@ -103,121 +250,169 @@
                 </div>
             </div>
 
-            <!-- Customer Segmentation -->
-            <div class="results-section">
-                <h2>🎯 Customer Segmentation</h2>
-                <div class="segmentation-results">
-                    <div class="segment-distribution">
-                        <h3>Segment Distribution</h3>
-                        <canvas id="segment-pie-chart"></canvas>
+            <!-- Segmentation Results -->
+            <div class="segmentation-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-sitemap"></i> Customer Segments</h2>
+                </div>
+                
+                <div class="segmentation-content">
+                    <div class="segment-visualization">
+                        <div class="chart-card">
+                            <div class="chart-container">
+                                <canvas id="segment-pie-chart"></canvas>
+                            </div>
+                        </div>
                     </div>
-                    <div class="segment-profiles">
-                        <h3>Segment Profiles</h3>
-                        <div id="segment-table" class="segment-table"></div>
+                    
+                    <div class="segment-table-container">
+                        <div class="table-card">
+                            <h3><i class="fas fa-table"></i> Segment Profiles</h3>
+                            <div class="table-responsive">
+                                <table id="segment-table" class="segment-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Segment</th>
+                                            <th>Customers</th>
+                                            <th>%</th>
+                                            <th>Avg Recency</th>
+                                            <th>Avg Frequency</th>
+                                            <th>Avg Monetary</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="segment-table-body">
+                                        <!-- Dynamic content -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- RFM by Segment -->
-                <div class="chart-section">
-                    <h3>RFM Values by Segment</h3>
-                    <canvas id="rfm-segment-chart"></canvas>
+                <div class="chart-card full-width">
+                    <h3 style="text-align: center; margin-bottom: 20px;">Normalized RFM Values by Segment</h3>
+                    <div class="chart-container">
+                        <canvas id="rfm-segment-chart"></canvas>
+                    </div>
                 </div>
 
-                <!-- Scatter Plot -->
-                <div class="chart-section">
-                    <h3>Customer Segments Visualization</h3>
-                    <canvas id="segment-scatter-chart"></canvas>
+                <!-- Customer Scatter Plot -->
+                <div class="chart-card full-width">
+                    <h3 style="text-align: center; margin-bottom: 20px;">Customer Segments: Recency vs Frequency</h3>
+                    <div class="chart-container">
+                        <canvas id="segment-scatter-chart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- Business Recommendations -->
-            <div class="results-section">
-                <h2>💡 Business Recommendations</h2>
-                <div id="recommendations" class="recommendations-grid"></div>
+            <!-- Recommendations -->
+            <div class="recommendations-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-lightbulb"></i> Actionable Insights</h2>
+                </div>
+                
+                <div class="recommendations-grid" id="recommendations-container">
+                    <!-- Dynamic content -->
+                </div>
             </div>
 
-            <!-- Download Results -->
-            <div class="results-section">
-                <h2>📥 Download Results</h2>
-                <button id="download-btn" class="download-btn">Download Customer Segments CSV</button>
+            <!-- Download Section -->
+            <div class="download-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-download"></i> Export Results</h2>
+                </div>
+                <div class="download-actions">
+                    <button id="download-btn" class="download-btn">
+                        <i class="fas fa-file-csv"></i>
+                        Download Customer Segments CSV
+                    </button>
+                    <button id="report-btn" class="download-btn secondary" onclick="generatePDFReport()">
+                        <i class="fas fa-file-pdf"></i>
+                        Generate Summary Report
+                    </button>
+                </div>
             </div>
         </section>
 
-        <!-- Welcome Section -->
-        <section id="welcome-section">
-            <div class="welcome-content">
-                <div class="welcome-text">
-                    <h2>🚀 Get Started</h2>
-                    <p>To begin your customer segmentation analysis:</p>
-                    <ol>
-                        <li><strong>Upload your data</strong> using the upload section above</li>
-                        <li><strong>Configure column mappings</strong> if auto-detection fails</li>
-                        <li><strong>View automated insights</strong> and customer segments</li>
-                        <li><strong>Download results</strong> for further analysis</li>
-                    </ol>
-
-                    <h3>📋 Supported Data Formats</h3>
-                    <ul>
-                        <li>CSV files (.csv)</li>
-                        <li>Excel files (.xlsx, .xls)</li>
-                        <li>Direct URLs to datasets</li>
-                    </ul>
-
-                    <h3>🎯 What You'll Get</h3>
-                    <ul>
-                        <li>Customer segmentation using RFM analysis</li>
-                        <li>Automated cluster identification</li>
-                        <li>Visualizations and insights</li>
-                        <li>Actionable business recommendations</li>
-                        <li>Downloadable results</li>
-                    </ul>
+        <!-- Data Warehouse Info -->
+        <section class="warehouse-section">
+            <div class="section-header">
+                <h2><i class="fas fa-database"></i> Client-Side Data Processing</h2>
+                <p>All analysis happens locally in your browser - your data never leaves your computer</p>
+            </div>
+            
+            <div class="warehouse-architecture">
+                <div class="architecture-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Secure Data Ingestion</h3>
+                        <p>Files processed locally - no server uploads required</p>
+                    </div>
                 </div>
-
-                <div class="sample-structure">
-                    <h3>📊 Sample Data Structure</h3>
-                    <div class="sample-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>CustomerID</th>
-                                    <th>InvoiceDate</th>
-                                    <th>Quantity</th>
-                                    <th>UnitPrice</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>12345</td>
-                                    <td>2023-01-01</td>
-                                    <td>2</td>
-                                    <td>25.50</td>
-                                    <td>Product A</td>
-                                </tr>
-                                <tr>
-                                    <td>12345</td>
-                                    <td>2023-01-15</td>
-                                    <td>1</td>
-                                    <td>15.00</td>
-                                    <td>Product B</td>
-                                </tr>
-                                <tr>
-                                    <td>67890</td>
-                                    <td>2023-01-20</td>
-                                    <td>3</td>
-                                    <td>10.00</td>
-                                    <td>Product C</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <div class="architecture-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Browser-Based ETL</h3>
+                        <p>Data transformation and cleaning happens in your browser</p>
+                    </div>
+                </div>
+                <div class="architecture-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Machine Learning</h3>
+                        <p>K-means clustering performed locally using JavaScript</p>
+                    </div>
+                </div>
+                <div class="architecture-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Real-time Analytics</h3>
+                        <p>Instant visualizations and insights generation</p>
+                    </div>
+                </div>
+                <div class="architecture-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>Privacy First</h3>
+                        <p>Your customer data remains 100% private and secure</p>
                     </div>
                 </div>
             </div>
         </section>
     </div>
 
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Customer Analytics Pro</h3>
+                <p>Advanced customer segmentation platform powered by AI and machine learning. 100% client-side processing.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Features</h4>
+                <ul>
+                    <li>RFM Analysis</li>
+                    <li>Machine Learning</li>
+                    <li>Data Visualization</li>
+                    <li>Privacy Focused</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Technology</h4>
+                <ul>
+                    <li>JavaScript ML</li>
+                    <li>Chart.js</li>
+                    <li>Client-Side Processing</li>
+                    <li>No Backend Required</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Customer Analytics Platform. All processing happens locally in your browser.</p>
+        </div>
+    </footer>
+
     <script src="script.js"></script>
 </body>
-
 </html>
-
