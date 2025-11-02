@@ -1,13 +1,12 @@
 // Global variables
 let currentData = null;
-let rfmData = null;
-let segmentData = null;
+let analysisResults = null;
 let charts = {};
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
-    showNotification('🚀 Platform Ready! All processing happens locally in your browser.', 'success');
+    showNotification('🚀 Platform Ready! Click "Load Sample Data" to start instantly.', 'success');
 });
 
 function initializeEventListeners() {
@@ -20,37 +19,28 @@ function initializeEventListeners() {
     // Analysis listeners
     document.getElementById('analyze-btn').addEventListener('click', analyzeData);
     document.getElementById('download-btn').addEventListener('click', downloadResults);
-    
-    // Navigation smooth scroll
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            document.getElementById(targetId).scrollIntoView({
-                behavior: 'smooth'
-            });
-        });
-    });
 }
 
-// Sample data for quick testing
-const sampleData = `CustomerID,InvoiceDate,Quantity,UnitPrice,Description
-12345,2023-01-01,2,25.50,Product A
-12345,2023-01-15,1,15.00,Product B
-12345,2023-02-01,3,10.00,Product C
-67890,2023-01-05,1,45.00,Product D
-67890,2023-02-10,2,22.50,Product E
-67890,2023-03-15,1,30.00,Product F
-24680,2023-01-10,5,8.00,Product G
-24680,2023-03-20,2,12.50,Product H
-13579,2023-02-05,1,100.00,Product I
-13579,2023-02-25,1,75.00,Product J
-11223,2023-01-20,3,15.00,Product K
-11223,2023-03-10,2,20.00,Product L
-44556,2023-02-15,1,50.00,Product M
-44556,2023-03-25,1,60.00,Product N
-77991,2023-01-25,4,5.00,Product O
-77991,2023-03-05,2,7.50,Product P`;
+// Enhanced sample data with more products and dates
+const sampleData = `CustomerID,InvoiceDate,Quantity,UnitPrice,Description,Country
+12345,2023-01-15,2,25.50,White Chocolate,LONDON
+12345,2023-02-20,1,15.00,Milk Chocolate,MANCHESTER
+12345,2023-03-10,3,10.00,Dark Chocolate,BIRMINGHAM
+67890,2023-01-05,1,45.00,Premium Chocolate Box,LONDON
+67890,2023-02-28,2,22.50,Assorted Chocolates,MANCHESTER
+67890,2023-03-25,1,30.00,Chocolate Gift Set,LONDON
+24680,2023-01-10,5,8.00,Chocolate Bars,BIRMINGHAM
+24680,2023-03-20,2,12.50,Chocolate Truffles,MANCHESTER
+13579,2023-02-05,1,100.00,Luxury Chocolate Hamper,LONDON
+13579,2023-02-25,1,75.00,Chocolate Basket,LONDON
+11223,2023-01-20,3,15.00,White Chocolate Bars,MANCHESTER
+11223,2023-03-10,2,20.00,Chocolate Coins,BIRMINGHAM
+44556,2023-02-15,1,50.00,Chocolate Box Set,LONDON
+44556,2023-03-25,1,60.00,Premium Chocolates,LONDON
+77991,2023-01-25,4,5.00,Chocolate Snacks,MANCHESTER
+77991,2023-03-05,2,7.50,Chocolate Bites,BIRMINGHAM
+33447,2023-02-10,3,18.00,Chocolate Bars,LONDON
+33447,2023-03-15,1,35.00,Chocolate Gift,LONDON`;
 
 function loadSampleData() {
     showLoading('Loading sample data...');
@@ -81,6 +71,7 @@ function loadSampleData() {
     }
 }
 
+// File handling functions remain the same...
 async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -91,14 +82,10 @@ async function handleFileUpload(event) {
         let data;
         
         if (file.name.includes('.xlsx') || file.name.includes('.xls')) {
-            console.log('Processing Excel file...');
             data = await readExcelFile(file);
         } else {
-            console.log('Processing CSV file...');
             data = await readCSVFile(file);
         }
-        
-        console.log('Data loaded successfully:', data.length, 'rows');
         
         if (!data || data.length === 0) {
             throw new Error('No data found in file');
@@ -111,7 +98,6 @@ async function handleFileUpload(event) {
         showConfigurationSection();
         
     } catch (error) {
-        console.error('Error:', error);
         showError('Error reading file: ' + error.message);
     } finally {
         hideLoading();
@@ -121,21 +107,17 @@ async function handleFileUpload(event) {
 function readExcelFile(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        
         reader.onload = function(e) {
             try {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 const data = XLSX.utils.sheet_to_json(worksheet);
-                
-                console.log('Excel sheet processed:', data.length, 'rows');
                 resolve(data);
             } catch (error) {
                 reject(new Error('Failed to parse Excel file: ' + error.message));
             }
         };
-        
         reader.onerror = () => reject(new Error('Failed to read file'));
         reader.readAsArrayBuffer(file);
     });
@@ -144,34 +126,22 @@ function readExcelFile(file) {
 function readCSVFile(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        
         reader.onload = function(e) {
             try {
                 const result = Papa.parse(e.target.result, {
                     header: true,
                     skipEmptyLines: true,
                     dynamicTyping: true,
-                    transform: (value) => {
-                        if (value === '' || value === null || value === undefined) return null;
-                        return value;
-                    }
                 });
-                
-                if (result.errors.length > 0) {
-                    console.warn('CSV parsing warnings:', result.errors);
-                }
                 
                 const cleanData = result.data.filter(row => 
                     Object.values(row).some(val => val !== null && val !== '')
                 );
-                
-                console.log('CSV processed:', cleanData.length, 'rows');
                 resolve(cleanData);
             } catch (error) {
                 reject(error);
             }
         };
-        
         reader.onerror = () => reject(new Error('Failed to read file'));
         reader.readAsText(file);
     });
@@ -187,8 +157,6 @@ async function handleUrlLoad() {
     showLoading('Loading data from URL...');
     
     try {
-        console.log('Loading from URL:', url);
-        
         let data;
         if (url.includes('.xlsx') || url.includes('.xls')) {
             data = await loadExcelFromUrl(url);
@@ -196,7 +164,6 @@ async function handleUrlLoad() {
             data = await loadCSVFromUrl(url);
         }
         
-        console.log('Data loaded from URL:', data.length, 'rows');
         currentData = data;
         showSuccess('Data loaded successfully from URL!');
         displayDataPreview(data);
@@ -204,7 +171,6 @@ async function handleUrlLoad() {
         showConfigurationSection();
         
     } catch (error) {
-        console.error('Error loading from URL:', error);
         showError('Error loading from URL: ' + error.message);
     } finally {
         hideLoading();
@@ -214,7 +180,6 @@ async function handleUrlLoad() {
 async function loadExcelFromUrl(url) {
     const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch: ' + response.status);
-    
     const arrayBuffer = await response.arrayBuffer();
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const firstSheetName = workbook.SheetNames[0];
@@ -225,17 +190,13 @@ async function loadExcelFromUrl(url) {
 async function loadCSVFromUrl(url) {
     const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch: ' + response.status);
-    
     const text = await response.text();
     const result = Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
         dynamicTyping: true
     });
-    
-    return result.data.filter(row => 
-        Object.values(row).some(val => val !== null && val !== '')
-    );
+    return result.data.filter(row => Object.values(row).some(val => val !== null && val !== ''));
 }
 
 function displayDataPreview(data) {
@@ -249,14 +210,12 @@ function displayDataPreview(data) {
     let html = '<h4><i class="fas fa-table"></i> Data Preview (First 10 Rows)</h4>';
     html += '<div class="table-responsive"><table class="preview-table"><thead><tr>';
     
-    // Headers
     const headers = Object.keys(data[0]);
     headers.forEach(header => {
         html += `<th>${header}</th>`;
     });
     html += '</tr></thead><tbody>';
     
-    // Data rows (limit to 10)
     data.slice(0, 10).forEach(row => {
         html += '<tr>';
         headers.forEach(header => {
@@ -289,7 +248,6 @@ function populateColumnSelectors(columns) {
         });
     });
     
-    // Auto-detect common column names
     autoDetectColumns(columns);
 }
 
@@ -312,7 +270,6 @@ function autoDetectColumns(columns) {
             
             if (matchingColumn) {
                 select.value = matchingColumn;
-                console.log(`Auto-detected ${matchingColumn} for ${selectorId}`);
                 break;
             }
         }
@@ -325,7 +282,6 @@ function showConfigurationSection() {
 }
 
 function analyzeData() {
-    // Collect column mappings
     const columnMapping = {
         customer_id: document.getElementById('customer-col').value,
         date: document.getElementById('date-col').value,
@@ -333,33 +289,21 @@ function analyzeData() {
         price: document.getElementById('price-col').value
     };
     
-    // Validate required columns
     if (!columnMapping.customer_id || !columnMapping.date) {
         showError('Please select Customer ID and Date columns (required)');
         return;
     }
     
-    showLoading('Performing advanced customer segmentation analysis...');
+    showLoading('Analyzing data and generating insights...');
     document.getElementById('results-section').style.display = 'block';
-    document.getElementById('insights').scrollIntoView({ behavior: 'smooth' });
     
-    // Use setTimeout to allow UI to update
     setTimeout(() => {
         try {
-            // Process data
-            const processedData = preprocessData(currentData, columnMapping);
-            console.log('Data processed:', processedData.length, 'rows');
+            // Process data and perform all analyses
+            analysisResults = performComprehensiveAnalysis(currentData, columnMapping);
             
-            // Calculate RFM
-            rfmData = calculateRFM(processedData, columnMapping);
-            console.log('RFM calculated:', rfmData.length, 'customers');
-            
-            // Perform segmentation
-            segmentData = performSegmentation(rfmData);
-            console.log('Segmentation completed');
-            
-            // Display results
-            displayAnalysisResults(segmentData);
+            // Display all results
+            displayAllAnalyses(analysisResults);
             
             showSuccess('Analysis completed successfully!');
             
@@ -372,60 +316,145 @@ function analyzeData() {
     }, 100);
 }
 
-function preprocessData(data, columnMapping) {
-    return data
-        .filter(row => {
-            // Remove rows with missing customer IDs
-            if (!row[columnMapping.customer_id]) {
-                return false;
-            }
-            
-            // Remove negative quantities and prices
-            if (columnMapping.quantity && row[columnMapping.quantity] <= 0) {
-                return false;
-            }
-            if (columnMapping.price && row[columnMapping.price] <= 0) {
-                return false;
-            }
-            
-            return true;
-        })
-        .map(row => {
-            const processed = { ...row };
-            
-            // Calculate total amount
-            if (columnMapping.quantity && columnMapping.price) {
-                processed.TotalAmount = (row[columnMapping.quantity] || 0) * (row[columnMapping.price] || 0);
-            } else {
-                processed.TotalAmount = 1;
-            }
-            
-            // Parse date
-            if (columnMapping.date && row[columnMapping.date]) {
-                try {
-                    processed.InvoiceDate = new Date(row[columnMapping.date]);
-                    if (isNaN(processed.InvoiceDate.getTime())) {
-                        processed.InvoiceDate = new Date(); // Fallback to current date
-                    }
-                } catch (error) {
-                    processed.InvoiceDate = new Date(); // Fallback to current date
-                }
-            } else {
-                processed.InvoiceDate = new Date(); // Fallback to current date
-            }
-            
-            return processed;
-        });
+function performComprehensiveAnalysis(data, columnMapping) {
+    const results = {};
+    
+    // Basic data processing
+    const processedData = data.map(row => ({
+        ...row,
+        TotalAmount: (row[columnMapping.quantity] || 1) * (row[columnMapping.price] || 1),
+        InvoiceDate: new Date(row[columnMapping.date]),
+        CustomerID: row[columnMapping.customer_id]
+    })).filter(row => row.CustomerID && row.TotalAmount > 0);
+
+    // 1. Sales Analysis
+    results.salesAnalysis = analyzeSales(processedData, columnMapping);
+    
+    // 2. Customer Analysis
+    results.customerAnalysis = analyzeCustomers(processedData);
+    
+    // 3. Product Analysis
+    results.productAnalysis = analyzeProducts(processedData, columnMapping);
+    
+    // 4. Time-based Analysis
+    results.timeAnalysis = analyzeTimePatterns(processedData);
+    
+    // 5. RFM Analysis (Simplified)
+    results.rfmAnalysis = performSimpleRFM(processedData);
+    
+    return results;
 }
 
-function calculateRFM(data, columnMapping) {
+function analyzeSales(data, columnMapping) {
+    const sales = {
+        totalRevenue: data.reduce((sum, row) => sum + row.TotalAmount, 0),
+        totalTransactions: data.length,
+        averageOrderValue: 0,
+        salesByProduct: {},
+        salesByMonth: {},
+        topSellingProducts: []
+    };
+    
+    sales.averageOrderValue = sales.totalRevenue / sales.totalTransactions;
+    
+    // Sales by product
+    data.forEach(row => {
+        const product = row.Description || 'Unknown Product';
+        sales.salesByProduct[product] = (sales.salesByProduct[product] || 0) + row.TotalAmount;
+    });
+    
+    // Sales by month
+    data.forEach(row => {
+        const month = row.InvoiceDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+        sales.salesByMonth[month] = (sales.salesByMonth[month] || 0) + row.TotalAmount;
+    });
+    
+    // Top selling products
+    sales.topSellingProducts = Object.entries(sales.salesByProduct)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([product, revenue]) => ({ product, revenue }));
+    
+    return sales;
+}
+
+function analyzeCustomers(data) {
+    const customers = {
+        totalCustomers: new Set(data.map(row => row.CustomerID)).size,
+        customerFrequency: {},
+        topCustomers: [],
+        newVsReturning: {
+            new: 0,
+            returning: 0
+        }
+    };
+    
+    // Customer frequency
+    data.forEach(row => {
+        customers.customerFrequency[row.CustomerID] = (customers.customerFrequency[row.CustomerID] || 0) + 1;
+    });
+    
+    // Top customers by spending
+    const customerSpending = {};
+    data.forEach(row => {
+        customerSpending[row.CustomerID] = (customerSpending[row.CustomerID] || 0) + row.TotalAmount;
+    });
+    
+    customers.topCustomers = Object.entries(customerSpending)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([customer, spending]) => ({ customer, spending }));
+    
+    return customers;
+}
+
+function analyzeProducts(data, columnMapping) {
+    const products = {
+        totalProducts: new Set(data.map(row => row.Description)).size,
+        productsByRevenue: {},
+        productsByQuantity: {},
+        lowStockItems: []
+    };
+    
+    // Products by revenue
+    data.forEach(row => {
+        const product = row.Description || 'Unknown';
+        products.productsByRevenue[product] = (products.productsByRevenue[product] || 0) + row.TotalAmount;
+        products.productsByQuantity[product] = (products.productsByQuantity[product] || 0) + (row[columnMapping.quantity] || 1);
+    });
+    
+    return products;
+}
+
+function analyzeTimePatterns(data) {
+    const timePatterns = {
+        salesByHour: {},
+        salesByDay: {},
+        salesByMonth: {},
+        peakHours: []
+    };
+    
+    data.forEach(row => {
+        const hour = row.InvoiceDate.getHours();
+        const day = row.InvoiceDate.getDay();
+        const month = row.InvoiceDate.getMonth();
+        
+        timePatterns.salesByHour[hour] = (timePatterns.salesByHour[hour] || 0) + row.TotalAmount;
+        timePatterns.salesByDay[day] = (timePatterns.salesByDay[day] || 0) + row.TotalAmount;
+        timePatterns.salesByMonth[month] = (timePatterns.salesByMonth[month] || 0) + row.TotalAmount;
+    });
+    
+    return timePatterns;
+}
+
+function performSimpleRFM(data) {
     const referenceDate = new Date(Math.max(...data.map(row => row.InvoiceDate.getTime())));
     referenceDate.setDate(referenceDate.getDate() + 1);
     
     const customerMap = {};
     
     data.forEach(row => {
-        const customerId = row[columnMapping.customer_id];
+        const customerId = row.CustomerID;
         if (!customerMap[customerId]) {
             customerMap[customerId] = {
                 lastDate: row.InvoiceDate,
@@ -441,10 +470,10 @@ function calculateRFM(data, columnMapping) {
         }
     });
     
-    const rfm = [];
+    const rfmData = [];
     for (const [customerId, stats] of Object.entries(customerMap)) {
         const recency = Math.floor((referenceDate - stats.lastDate) / (1000 * 60 * 60 * 24));
-        rfm.push({
+        rfmData.push({
             CustomerID: customerId,
             Recency: recency,
             Frequency: stats.frequency,
@@ -452,84 +481,61 @@ function calculateRFM(data, columnMapping) {
         });
     }
     
-    return rfm;
-}
-
-function performSegmentation(rfmData) {
-    // Prepare data for clustering
-    const features = rfmData.map(customer => [
-        customer.Recency,
-        Math.log1p(customer.Frequency),
-        Math.log1p(customer.Monetary)
-    ]);
-    
-    // Normalize features
-    const normalizedFeatures = normalizeFeatures(features);
-    
-    // Perform k-means clustering
-    const k = 4;
-    const result = mlKmeans(normalizedFeatures, k, { initialization: 'kmeans++' });
-    
-    // Assign segments
-    const segmentNames = ['Bronze', 'Silver', 'Gold', 'Platinum'];
-    return rfmData.map((customer, index) => ({
-        ...customer,
-        Cluster: result.clusters[index],
-        Segment: segmentNames[result.clusters[index]] || 'Unknown'
-    }));
-}
-
-function normalizeFeatures(features) {
-    const normalized = [];
-    const numFeatures = features[0].length;
-    
-    for (let i = 0; i < numFeatures; i++) {
-        const featureValues = features.map(row => row[i]);
-        const min = Math.min(...featureValues);
-        const max = Math.max(...featureValues);
-        const range = max - min;
+    // Simple segmentation based on percentiles
+    const segments = rfmData.map(customer => {
+        let score = 0;
         
-        if (range === 0) {
-            // All values are the same, set to 0.5
-            features.forEach((row, idx) => {
-                if (!normalized[idx]) normalized[idx] = [];
-                normalized[idx][i] = 0.5;
-            });
-        } else {
-            features.forEach((row, idx) => {
-                if (!normalized[idx]) normalized[idx] = [];
-                normalized[idx][i] = (row[i] - min) / range;
-            });
-        }
-    }
+        // Simple scoring (you can make this more sophisticated)
+        if (customer.Recency <= 30) score += 3;
+        else if (customer.Recency <= 90) score += 2;
+        else score += 1;
+        
+        if (customer.Frequency >= 5) score += 3;
+        else if (customer.Frequency >= 2) score += 2;
+        else score += 1;
+        
+        if (customer.Monetary >= 100) score += 3;
+        else if (customer.Monetary >= 50) score += 2;
+        else score += 1;
+        
+        let segment = 'Bronze';
+        if (score >= 7) segment = 'Platinum';
+        else if (score >= 5) segment = 'Gold';
+        else if (score >= 3) segment = 'Silver';
+        
+        return {
+            ...customer,
+            Segment: segment
+        };
+    });
     
-    return normalized;
+    return segments;
 }
 
-function displayAnalysisResults(segments) {
+function displayAllAnalyses(results) {
     // Update metrics
     document.getElementById('total-customers').textContent = 
-        segments.length.toLocaleString();
+        results.customerAnalysis.totalCustomers.toLocaleString();
     document.getElementById('total-revenue').textContent = 
-        '$' + segments.reduce((sum, c) => sum + c.Monetary, 0).toLocaleString('en-US', {
+        '$' + results.salesAnalysis.totalRevenue.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
     document.getElementById('avg-frequency').textContent = 
-        (segments.reduce((sum, c) => sum + c.Frequency, 0) / segments.length).toFixed(1);
+        (results.salesAnalysis.totalRevenue / results.salesAnalysis.totalTransactions).toFixed(1);
     
-    // Create visualizations
-    createRFMCharts(segments);
-    createSegmentationCharts(segments);
+    // Create all visualizations
+    createSalesCharts(results.salesAnalysis);
+    createCustomerCharts(results.customerAnalysis);
+    createProductCharts(results.productAnalysis);
+    createTimeCharts(results.timeAnalysis);
+    createRFMCharts(results.rfmAnalysis);
     
-    // Display segment analysis
-    displaySegmentAnalysis(segments);
-    
-    // Display recommendations
-    displayRecommendations(segments);
+    // Display insights
+    displayBusinessInsights(results);
 }
 
-function createRFMCharts(segments) {
+function createSalesCharts(sales) {
     // Destroy existing charts
     Object.values(charts).forEach(chart => {
         if (chart && typeof chart.destroy === 'function') {
@@ -538,17 +544,22 @@ function createRFMCharts(segments) {
     });
     charts = {};
     
-    // Recency Distribution
-    charts.recency = new Chart(document.getElementById('recency-chart'), {
-        type: 'bar',
+    // Monthly Sales Trend
+    const monthlyLabels = Object.keys(sales.salesByMonth);
+    const monthlyData = Object.values(sales.salesByMonth);
+    
+    charts.monthlySales = new Chart(document.getElementById('recency-chart'), {
+        type: 'line',
         data: {
-            labels: createHistogramBins(segments.map(s => s.Recency), 20),
+            labels: monthlyLabels,
             datasets: [{
-                label: 'Number of Customers',
-                data: createHistogramData(segments.map(s => s.Recency), 20),
-                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                label: 'Monthly Revenue',
+                data: monthlyData,
                 borderColor: 'rgba(52, 152, 219, 1)',
-                borderWidth: 1
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
             }]
         },
         options: {
@@ -556,30 +567,32 @@ function createRFMCharts(segments) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Recency Distribution',
+                    text: 'Monthly Sales Trend',
                     font: { size: 16, weight: 'bold' }
                 }
             },
             scales: {
-                x: { 
-                    title: { display: true, text: 'Days since last purchase' }
-                },
-                y: { 
-                    title: { display: true, text: 'Number of customers' },
-                    beginAtZero: true
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Revenue ($)' }
                 }
             }
         }
     });
+}
+
+function createCustomerCharts(customers) {
+    // Top Customers by Spending
+    const topCustomerLabels = customers.topCustomers.map(c => `Customer ${c.customer}`);
+    const topCustomerData = customers.topCustomers.map(c => c.spending);
     
-    // Frequency Distribution
-    charts.frequency = new Chart(document.getElementById('frequency-chart'), {
+    charts.topCustomers = new Chart(document.getElementById('frequency-chart'), {
         type: 'bar',
         data: {
-            labels: createHistogramBins(segments.map(s => s.Frequency), 15),
+            labels: topCustomerLabels,
             datasets: [{
-                label: 'Number of Customers',
-                data: createHistogramData(segments.map(s => s.Frequency), 15),
+                label: 'Total Spending',
+                data: topCustomerData,
                 backgroundColor: 'rgba(46, 204, 113, 0.7)',
                 borderColor: 'rgba(46, 204, 113, 1)',
                 borderWidth: 1
@@ -590,32 +603,73 @@ function createRFMCharts(segments) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Frequency Distribution',
+                    text: 'Top 10 Customers by Spending',
                     font: { size: 16, weight: 'bold' }
                 }
             },
             scales: {
-                x: { 
-                    title: { display: true, text: 'Number of transactions' }
-                },
-                y: { 
-                    title: { display: true, text: 'Number of customers' },
-                    beginAtZero: true
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Total Spending ($)' }
                 }
             }
         }
     });
+}
+
+function createProductCharts(products) {
+    // Top Products by Revenue (Pie Chart)
+    const topProducts = Object.entries(products.productsByRevenue)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 8);
     
-    // Monetary Distribution
-    charts.monetary = new Chart(document.getElementById('monetary-chart'), {
+    const productLabels = topProducts.map(([product]) => product);
+    const productData = topProducts.map(([,revenue]) => revenue);
+    
+    charts.topProducts = new Chart(document.getElementById('monetary-chart'), {
+        type: 'pie',
+        data: {
+            labels: productLabels,
+            datasets: [{
+                data: productData,
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                    '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Top Products by Revenue',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function createTimeCharts(timePatterns) {
+    // Sales by Hour
+    const hourLabels = Object.keys(timePatterns.salesByHour).sort((a, b) => a - b);
+    const hourData = hourLabels.map(hour => timePatterns.salesByHour[hour]);
+    
+    charts.salesByHour = new Chart(document.getElementById('segment-pie-chart'), {
         type: 'bar',
         data: {
-            labels: createHistogramBins(segments.map(s => s.Monetary), 15),
+            labels: hourLabels.map(h => h + ':00'),
             datasets: [{
-                label: 'Number of Customers',
-                data: createHistogramData(segments.map(s => s.Monetary), 15),
-                backgroundColor: 'rgba(231, 76, 60, 0.7)',
-                borderColor: 'rgba(231, 76, 60, 1)',
+                label: 'Revenue by Hour',
+                data: hourData,
+                backgroundColor: 'rgba(155, 89, 182, 0.7)',
+                borderColor: 'rgba(155, 89, 182, 1)',
                 borderWidth: 1
             }]
         },
@@ -624,32 +678,29 @@ function createRFMCharts(segments) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Monetary Distribution',
+                    text: 'Sales Distribution by Hour',
                     font: { size: 16, weight: 'bold' }
                 }
             },
             scales: {
-                x: { 
-                    title: { display: true, text: 'Total spending ($)' }
-                },
-                y: { 
-                    title: { display: true, text: 'Number of customers' },
-                    beginAtZero: true
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Revenue ($)' }
                 }
             }
         }
     });
 }
 
-function createSegmentationCharts(segments) {
-    // Segment Distribution Pie Chart
+function createRFMCharts(rfmData) {
+    // Segment Distribution
     const segmentCounts = {};
-    segments.forEach(c => {
+    rfmData.forEach(c => {
         segmentCounts[c.Segment] = (segmentCounts[c.Segment] || 0) + 1;
     });
     
-    charts.segmentPie = new Chart(document.getElementById('segment-pie-chart'), {
-        type: 'pie',
+    charts.segments = new Chart(document.getElementById('rfm-segment-chart'), {
+        type: 'doughnut',
         data: {
             labels: Object.keys(segmentCounts),
             datasets: [{
@@ -662,80 +713,31 @@ function createSegmentationCharts(segments) {
         options: {
             responsive: true,
             plugins: {
-                legend: {
-                    position: 'bottom'
-                },
                 title: {
                     display: true,
-                    text: 'Customer Segment Distribution',
+                    text: 'Customer Segments Distribution',
                     font: { size: 16, weight: 'bold' }
+                },
+                legend: {
+                    position: 'bottom'
                 }
             }
         }
     });
     
-    // RFM by Segment Bar Chart
-    const segmentStats = calculateSegmentStats(segments);
-    const segmentNames = Object.keys(segmentStats);
-    
-    charts.rfmSegment = new Chart(document.getElementById('rfm-segment-chart'), {
-        type: 'bar',
-        data: {
-            labels: segmentNames,
-            datasets: [
-                {
-                    label: 'Recency (normalized)',
-                    data: segmentNames.map(seg => segmentStats[seg].normalizedRecency),
-                    backgroundColor: 'rgba(52, 152, 219, 0.7)'
-                },
-                {
-                    label: 'Frequency (normalized)',
-                    data: segmentNames.map(seg => segmentStats[seg].normalizedFrequency),
-                    backgroundColor: 'rgba(46, 204, 113, 0.7)'
-                },
-                {
-                    label: 'Monetary (normalized)',
-                    data: segmentNames.map(seg => segmentStats[seg].normalizedMonetary),
-                    backgroundColor: 'rgba(231, 76, 60, 0.7)'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 1,
-                    title: {
-                        display: true,
-                        text: 'Normalized Values'
-                    }
-                }
-            }
-        }
-    });
-    
-    // Customer Segments Scatter Plot
-    const segmentColors = {
-        'Bronze': '#8B4513',
-        'Silver': '#C0C0C0',
-        'Gold': '#FFD700',
-        'Platinum': '#E5E4E2'
-    };
-    
+    // Customer Value Scatter Plot
     const scatterData = {
-        datasets: segmentNames.map(segment => {
-            const segmentPoints = segments.filter(s => s.Segment === segment);
+        datasets: Object.keys(segmentCounts).map(segment => {
+            const segmentPoints = rfmData.filter(s => s.Segment === segment);
             return {
                 label: segment,
                 data: segmentPoints.map(customer => ({
                     x: customer.Recency,
                     y: customer.Frequency,
-                    r: 5 + (customer.Monetary / Math.max(...segments.map(s => s.Monetary))) * 10
+                    r: 5
                 })),
-                backgroundColor: segmentColors[segment],
-                borderColor: segmentColors[segment],
-                pointRadius: 5
+                backgroundColor: getSegmentColor(segment),
+                pointRadius: 6
             };
         })
     };
@@ -745,196 +747,147 @@ function createSegmentationCharts(segments) {
         data: scatterData,
         options: {
             responsive: true,
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Recency (days)'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Frequency'
-                    }
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Customer Segments: Recency vs Frequency',
+                    font: { size: 16, weight: 'bold' }
                 }
             },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const customer = segments.find(s => 
-                                s.Recency === context.parsed.x && 
-                                s.Frequency === context.parsed.y
-                            );
-                            return [
-                                `Customer: ${customer.CustomerID}`,
-                                `Recency: ${customer.Recency} days`,
-                                `Frequency: ${customer.Frequency} transactions`,
-                                `Monetary: $${customer.Monetary.toFixed(2)}`
-                            ];
-                        }
-                    }
+            scales: {
+                x: {
+                    title: { display: true, text: 'Recency (days)' }
+                },
+                y: {
+                    title: { display: true, text: 'Frequency' }
                 }
             }
         }
     });
 }
 
-function calculateSegmentStats(segments) {
-    const stats = {};
-    const segmentsList = ['Bronze', 'Silver', 'Gold', 'Platinum'];
-    
-    segmentsList.forEach(segment => {
-        const segmentData = segments.filter(s => s.Segment === segment);
-        if (segmentData.length === 0) return;
-        
-        stats[segment] = {
-            count: segmentData.length,
-            avgRecency: segmentData.reduce((sum, s) => sum + s.Recency, 0) / segmentData.length,
-            avgFrequency: segmentData.reduce((sum, s) => sum + s.Frequency, 0) / segmentData.length,
-            avgMonetary: segmentData.reduce((sum, s) => sum + s.Monetary, 0) / segmentData.length
-        };
-    });
-    
-    // Normalize values for comparison
-    const maxRecency = Math.max(...Object.values(stats).map(s => s.avgRecency));
-    const maxFrequency = Math.max(...Object.values(stats).map(s => s.avgFrequency));
-    const maxMonetary = Math.max(...Object.values(stats).map(s => s.avgMonetary));
-    
-    Object.keys(stats).forEach(segment => {
-        stats[segment].normalizedRecency = stats[segment].avgRecency / maxRecency;
-        stats[segment].normalizedFrequency = stats[segment].avgFrequency / maxFrequency;
-        stats[segment].normalizedMonetary = stats[segment].avgMonetary / maxMonetary;
-        stats[segment].percentage = ((stats[segment].count / segments.length) * 100).toFixed(1);
-    });
-    
-    return stats;
-}
-
-function displaySegmentAnalysis(segments) {
-    const tableBody = document.getElementById('segment-table-body');
-    tableBody.innerHTML = '';
-    
-    const segmentStats = calculateSegmentStats(segments);
-    
-    Object.entries(segmentStats).forEach(([segment, stats]) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><strong>${segment}</strong></td>
-            <td>${stats.count}</td>
-            <td>${stats.percentage}%</td>
-            <td>${stats.avgRecency.toFixed(0)} days</td>
-            <td>${stats.avgFrequency.toFixed(1)}</td>
-            <td>$${stats.avgMonetary.toFixed(2)}</td>
-        `;
-        tableBody.appendChild(row);
-    });
-}
-
-function displayRecommendations(segments) {
-    const container = document.getElementById('recommendations-container');
-    container.innerHTML = '';
-    
-    const segmentStats = calculateSegmentStats(segments);
-    const recommendations = {
-        'Platinum': [
-            "VIP treatment with exclusive loyalty programs",
-            "Personalized shopping assistance and early access",
-            "High-value personalized offers and dedicated support",
-            "Invitation-only events and premium experiences"
-        ],
-        'Gold': [
-            "Tiered loyalty program with clear upgrade path",
-            "Cross-selling based on comprehensive purchase history",
-            "Seasonal promotions and exclusive bundle offers",
-            "Personalized email campaigns with smart recommendations"
-        ],
-        'Silver': [
-            "Welcome back campaigns with reactivation offers",
-            "Educational content about product benefits",
-            "Re-engagement campaigns with social proof",
-            "Entry-level loyalty program with achievable goals"
-        ],
-        'Bronze': [
-            "Win-back campaigns with compelling discounts",
-            "Simplified shopping experience and guided navigation",
-            "Limited-time reactivation offers",
-            "Feedback surveys to understand customer needs"
-        ]
+function getSegmentColor(segment) {
+    const colors = {
+        'Platinum': '#FFD700',
+        'Gold': '#C0C0C0',
+        'Silver': '#CD7F32', 
+        'Bronze': '#8B4513'
     };
+    return colors[segment] || '#666666';
+}
+
+function displayBusinessInsights(results) {
+    const container = document.getElementById('recommendations-container');
     
-    Object.entries(segmentStats).forEach(([segment, stats]) => {
-        const card = document.createElement('div');
-        card.className = 'recommendation-card';
-        
-        let html = `<h4><i class="fas fa-star"></i> ${segment} Customers (${stats.count} customers, ${stats.percentage}%)</h4>`;
-        html += `<p><strong>Profile:</strong> ${stats.avgRecency.toFixed(0)} days recency, ${stats.avgFrequency.toFixed(1)} avg frequency, $${stats.avgMonetary.toFixed(2)} avg spending</p>`;
-        html += '<p><strong>Recommended Strategies:</strong></p>';
-        html += '<ul>';
-        
-        (recommendations[segment] || []).forEach(tip => {
-            html += `<li>${tip}</li>`;
-        });
-        
-        html += '</ul>';
-        card.innerHTML = html;
-        container.appendChild(card);
+    const insights = generateBusinessInsights(results);
+    
+    let html = '';
+    
+    insights.forEach(insight => {
+        html += `
+            <div class="recommendation-card">
+                <h4><i class="fas ${insight.icon}"></i> ${insight.title}</h4>
+                <p>${insight.description}</p>
+                ${insight.recommendations ? `
+                    <p><strong>Recommendations:</strong></p>
+                    <ul>
+                        ${insight.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
     });
+    
+    container.innerHTML = html;
+}
+
+function generateBusinessInsights(results) {
+    const insights = [];
+    
+    // Sales Insights
+    const topProduct = results.salesAnalysis.topSellingProducts[0];
+    insights.push({
+        icon: 'fa-chart-line',
+        title: 'Sales Performance',
+        description: `Total revenue: $${results.salesAnalysis.totalRevenue.toLocaleString()}. ${topProduct ? `Top product "${topProduct.product}" generated $${topProduct.revenue.toFixed(2)}` : ''}`,
+        recommendations: [
+            'Focus marketing on top-performing products',
+            'Create bundles with best-selling items',
+            'Increase stock for high-demand products'
+        ]
+    });
+    
+    // Customer Insights
+    const topCustomer = results.customerAnalysis.topCustomers[0];
+    insights.push({
+        icon: 'fa-users',
+        title: 'Customer Insights',
+        description: `Serving ${results.customerAnalysis.totalCustomers} unique customers. ${topCustomer ? `Top customer spent $${topCustomer.spending.toFixed(2)}` : ''}`,
+        recommendations: [
+            'Implement loyalty program for top customers',
+            'Create personalized offers for frequent buyers',
+            'Develop win-back campaigns for inactive customers'
+        ]
+    });
+    
+    // Product Insights
+    const productCount = results.productAnalysis.totalProducts;
+    insights.push({
+        icon: 'fa-box',
+        title: 'Product Analysis',
+        description: `Managing ${productCount} different products in inventory.`,
+        recommendations: [
+            'Optimize inventory for fast-moving products',
+            'Consider discontinuing low-performing items',
+            'Explore cross-selling opportunities'
+        ]
+    });
+    
+    // RFM Insights
+    const segmentCounts = {};
+    results.rfmAnalysis.forEach(c => {
+        segmentCounts[c.Segment] = (segmentCounts[c.Segment] || 0) + 1;
+    });
+    
+    insights.push({
+        icon: 'fa-sitemap',
+        title: 'Customer Segments',
+        description: `Customer base segmented into ${Object.keys(segmentCounts).length} groups for targeted marketing.`,
+        recommendations: [
+            'Create VIP program for Platinum segment',
+            'Develop reactivation campaigns for Bronze customers',
+            'Personalize communication for each segment'
+        ]
+    });
+    
+    return insights;
 }
 
 function downloadResults() {
-    if (!segmentData) {
+    if (!analysisResults || !analysisResults.rfmAnalysis) {
         showError('No analysis results to download');
         return;
     }
     
     try {
-        const csv = Papa.unparse(segmentData);
+        const csv = Papa.unparse(analysisResults.rfmAnalysis);
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `customer_segments_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `customer_analysis_${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         
-        showSuccess('CSV download started successfully!');
+        showSuccess('Analysis results downloaded successfully!');
     } catch (error) {
         showError('Download failed: ' + error.message);
     }
 }
 
-function generatePDFReport() {
-    showNotification('PDF generation would require additional libraries. CSV download is available.', 'info');
-}
-
 // Utility functions
-function createHistogramBins(data, bins) {
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const binSize = (max - min) / bins;
-    return Array.from({ length: bins }, (_, i) => 
-        Math.floor(min + i * binSize)
-    );
-}
-
-function createHistogramData(data, bins) {
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const binSize = (max - min) / bins;
-    const histogram = new Array(bins).fill(0);
-    
-    data.forEach(value => {
-        const binIndex = Math.min(Math.floor((value - min) / binSize), bins - 1);
-        histogram[binIndex]++;
-    });
-    
-    return histogram;
-}
-
 function showLoading(message) {
     const spinner = document.getElementById('loading-spinner');
     if (spinner) {
@@ -959,7 +912,6 @@ function showError(message) {
 }
 
 function showNotification(message, type) {
-    // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
     
@@ -974,24 +926,9 @@ function showNotification(message, type) {
     
     document.body.appendChild(notification);
     
-    // Auto-remove after 5 seconds
     setTimeout(() => {
         if (notification.parentElement) {
             notification.remove();
         }
     }, 5000);
 }
-
-// Add smooth scrolling for all anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-    });
-});
