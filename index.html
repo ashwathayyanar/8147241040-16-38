@@ -3,18 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retail Customer Segmentation</title>
+    <title>Advanced Customer Segmentation Platform</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
     <style>
         :root {
             --primary: #2c3e50;
             --secondary: #3498db;
             --accent: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
             --light: #ecf0f1;
             --dark: #2c3e50;
-            --success: #2ecc71;
+            --sidebar-width: 280px;
         }
         
         * {
@@ -25,87 +29,254 @@
         }
         
         body {
-            background-color: #f5f7fa;
+            background-color: #f8f9fa;
             color: var(--dark);
             line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
         }
         
-        header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        /* Sidebar Navigation */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary), #1a2530);
             color: white;
-            padding: 2rem 0;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
         }
         
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
-        h1 {
-            font-size: 2.5rem;
+        .logo-icon {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-item {
             margin-bottom: 0.5rem;
         }
         
-        .subtitle {
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: white;
+        }
+        
+        .nav-icon {
+            margin-right: 10px;
             font-size: 1.2rem;
-            opacity: 0.9;
-            margin-bottom: 1rem;
         }
         
-        .sdg-badge {
-            display: inline-block;
-            background-color: var(--accent);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .header h1 {
+            color: var(--primary);
+            font-size: 2rem;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
             font-weight: bold;
-            font-size: 0.9rem;
+            margin-right: 10px;
         }
         
-        main {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            padding: 1.5rem;
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
         
-        h2 {
-            color: var(--primary);
-            margin-bottom: 1rem;
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .metric-card.warning {
+            border-left-color: var(--warning);
+        }
+        
+        .metric-card.success {
+            border-left-color: var(--success);
+        }
+        
+        .metric-card.accent {
+            border-left-color: var(--accent);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .metric-change {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .change-positive {
+            color: var(--success);
+        }
+        
+        .change-negative {
+            color: var(--accent);
+        }
+        
+        /* Content Sections */
+        .content-section {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
             padding-bottom: 0.5rem;
             border-bottom: 2px solid var(--light);
         }
         
+        .section-title {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--secondary);
+            color: var(--secondary);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            height: 400px;
+        }
+        
+        /* Upload Area */
         .upload-area {
             border: 2px dashed var(--secondary);
             border-radius: 10px;
-            padding: 2rem;
+            padding: 3rem;
             text-align: center;
             margin-bottom: 1rem;
             transition: all 0.3s ease;
             cursor: pointer;
+            background: rgba(52, 152, 219, 0.05);
         }
         
         .upload-area:hover {
-            background-color: rgba(52, 152, 219, 0.05);
+            background-color: rgba(52, 152, 219, 0.1);
         }
         
         .upload-area.dragover {
-            background-color: rgba(52, 152, 219, 0.1);
+            background-color: rgba(52, 152, 219, 0.15);
             border-color: var(--accent);
         }
         
         .upload-icon {
-            font-size: 3rem;
+            font-size: 4rem;
             color: var(--secondary);
             margin-bottom: 1rem;
         }
@@ -123,11 +294,13 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s ease;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .btn:hover {
-            background-color: var(--primary);
+            background-color: #2980b9;
             transform: translateY(-2px);
         }
         
@@ -143,168 +316,750 @@
             background-color: #c0392b;
         }
         
-        .data-preview {
+        .btn-success {
+            background-color: var(--success);
+        }
+        
+        .btn-success:hover {
+            background-color: #219a52;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        /* Data Table */
+        .data-table-container {
             overflow-x: auto;
             margin-top: 1rem;
         }
         
-        table {
+        .data-table {
             width: 100%;
             border-collapse: collapse;
         }
         
-        th, td {
+        .data-table th, .data-table td {
             padding: 0.75rem;
             text-align: left;
-            border-bottom: 1px solid var(--light);
+            border-bottom: 1px solid #e0e0e0;
         }
         
-        th {
-            background-color: var(--light);
+        .data-table th {
+            background-color: #f8f9fa;
             font-weight: bold;
+            color: var(--primary);
         }
         
-        tr:hover {
-            background-color: rgba(52, 152, 219, 0.05);
+        .data-table tr:hover {
+            background-color: #f5f5f5;
         }
         
-        .charts-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 1rem 0;
+            overflow: hidden;
         }
         
-        .chart {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            padding: 1.5rem;
-            height: 400px;
+        .progress-bar {
+            height: 10px;
+            background-color: var(--secondary);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s ease;
         }
         
+        /* Alert Messages */
+        .alert {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .alert-icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        /* Loading Spinner */
         .loading {
-            text-align: center;
-            padding: 2rem;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: var(--secondary);
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            border-top-color: white;
             animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
+            margin-right: 10px;
         }
         
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 80px;
+                padding: 1rem 0.5rem;
+            }
+            
+            .logo-text, .nav-text {
+                display: none;
+            }
+            
+            .nav-link {
+                justify-content: center;
+                padding: 0.8rem;
+            }
+            
+            .nav-icon {
+                margin-right: 0;
+                font-size: 1.5rem;
+            }
+            
+            .main-content {
+                margin-left: 80px;
             }
         }
         
-        .error-message {
-            background-color: #ffeaea;
-            color: var(--accent);
-            padding: 1rem;
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+        
+        /* Advanced Controls */
+        .advanced-controls {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .control-group {
+            margin-bottom: 1rem;
+        }
+        
+        .control-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .control-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
             border-radius: 5px;
-            margin: 1rem 0;
+            font-size: 1rem;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .slider {
+            flex: 1;
+        }
+        
+        .slider-value {
+            min-width: 50px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        /* Segment Cards */
+        .segments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .segment-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-top: 4px solid var(--secondary);
+            transition: transform 0.3s ease;
+        }
+        
+        .segment-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .segment-card.gold {
+            border-top-color: #FFD700;
+        }
+        
+        .segment-card.silver {
+            border-top-color: #C0C0C0;
+        }
+        
+        .segment-card.bronze {
+            border-top-color: #CD7F32;
+        }
+        
+        .segment-card.platinum {
+            border-top-color: #E5E4E2;
+        }
+        
+        .segment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .segment-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .segment-badge {
+            background: var(--secondary);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .segment-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .segment-stat {
+            text-align: center;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
         }
         
         .hidden {
             display: none;
         }
-        
-        footer {
-            text-align: center;
-            padding: 2rem;
-            margin-top: 2rem;
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        @media (max-width: 768px) {
-            .charts-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .chart {
-                height: 300px;
-            }
-        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <h1>Retail Customer Segmentation</h1>
-            <p class="subtitle">Using Data Warehousing & Purchase Pattern Analysis</p>
-            <div class="sdg-badge">SDG 8: Decent Work & Economic Growth</div>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">📊</div>
+            <div class="logo-text">CustomerIQ</div>
         </div>
-    </header>
-    
-    <main>
-        <section class="card">
-            <h2>Upload Your Data</h2>
-            <p>Upload a CSV or Excel file containing your customer purchase data. Our system will automatically analyze the data and generate customer segmentation visualizations.</p>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active" data-target="dashboard">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-target="data-upload">
+                    <span class="nav-icon">📤</span>
+                    <span class="nav-text">Data Upload</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-target="segmentation">
+                    <span class="nav-icon">🎯</span>
+                    <span class="nav-text">Segmentation</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-target="analytics">
+                    <span class="nav-icon">🔍</span>
+                    <span class="nav-text">Advanced Analytics</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-target="predictions">
+                    <span class="nav-icon">🔮</span>
+                    <span class="nav-text">Predictions</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-target="reports">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Reports</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-target="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Settings</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <h1>Customer Segmentation Dashboard</h1>
+            <div class="user-menu">
+                <div class="user-avatar">JD</div>
+                <div>
+                    <div>John Doe</div>
+                    <div style="font-size: 0.8rem; color: #7f8c8d;">Administrator</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+            <div class="section-header">
+                <h2 class="section-title">Overview</h2>
+                <div class="date-range">Last 30 days</div>
+            </div>
+            
+            <!-- Key Metrics -->
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Customers</div>
+                    <div class="metric-value">12,458</div>
+                    <div class="metric-change change-positive">
+                        <span>+5.2%</span> from last month
+                    </div>
+                </div>
+                <div class="metric-card success">
+                    <div class="metric-label">Active Customers</div>
+                    <div class="metric-value">8,742</div>
+                    <div class="metric-change change-positive">
+                        <span>+2.1%</span> from last month
+                    </div>
+                </div>
+                <div class="metric-card warning">
+                    <div class="metric-label">Avg. Order Value</div>
+                    <div class="metric-value">$142.50</div>
+                    <div class="metric-change change-negative">
+                        <span>-1.3%</span> from last month
+                    </div>
+                </div>
+                <div class="metric-card accent">
+                    <div class="metric-label">Customer Retention</div>
+                    <div class="metric-value">78.4%</div>
+                    <div class="metric-change change-positive">
+                        <span>+3.7%</span> from last month
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div id="segmentation-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <div id="trend-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <div id="geographic-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <div id="rfm-chart"></div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">Recent Activity</h2>
+                    <button class="btn btn-accent">View All</button>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Segment</th>
+                                <th>Last Purchase</th>
+                                <th>Lifetime Value</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Michael Johnson</td>
+                                <td><span class="segment-badge" style="background: #FFD700;">Gold</span></td>
+                                <td>2 days ago</td>
+                                <td>$4,250</td>
+                                <td><span style="color: var(--success);">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td>Sarah Williams</td>
+                                <td><span class="segment-badge" style="background: #E5E4E2;">Platinum</span></td>
+                                <td>5 days ago</td>
+                                <td>$8,750</td>
+                                <td><span style="color: var(--success);">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td>Robert Brown</td>
+                                <td><span class="segment-badge" style="background: #C0C0C0;">Silver</span></td>
+                                <td>2 weeks ago</td>
+                                <td>$1,200</td>
+                                <td><span style="color: var(--warning);">At Risk</span></td>
+                            </tr>
+                            <tr>
+                                <td>Jennifer Davis</td>
+                                <td><span class="segment-badge" style="background: #CD7F32;">Bronze</span></td>
+                                <td>1 month ago</td>
+                                <td>$450</td>
+                                <td><span style="color: var(--accent);">Inactive</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Upload Section -->
+        <section id="data-upload" class="content-section hidden">
+            <div class="section-header">
+                <h2 class="section-title">Data Upload & Management</h2>
+            </div>
+            
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>Data Privacy:</strong> Your data is processed locally in your browser and never sent to our servers.
+                </div>
+            </div>
             
             <div class="upload-area" id="uploadArea">
-                <div class="upload-icon">📊</div>
-                <h3>Drag & Drop your file here</h3>
+                <div class="upload-icon">📤</div>
+                <h3>Drag & Drop your customer data file here</h3>
                 <p>or</p>
-                <button class="btn" id="browseBtn">Browse Files</button>
-                <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls">
-                <p>Supported formats: CSV, XLSX, XLS</p>
+                <button class="btn" id="browseBtn">
+                    <i>📁</i> Browse Files
+                </button>
+                <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls,.json">
+                <p>Supported formats: CSV, Excel (XLSX, XLS), JSON</p>
             </div>
             
             <div id="fileInfo" class="hidden">
-                <p><strong>Selected file:</strong> <span id="fileName"></span></p>
-                <button class="btn btn-accent" id="analyzeBtn">Analyze Data</button>
+                <div class="alert alert-success">
+                    <span class="alert-icon">✅</span>
+                    <div>
+                        <strong>File uploaded successfully!</strong>
+                        <div id="fileName"></div>
+                    </div>
+                </div>
+                
+                <div class="advanced-controls">
+                    <h3>Data Configuration</h3>
+                    <div class="control-group">
+                        <label class="control-label">Data Sampling (for large datasets)</label>
+                        <div class="slider-container">
+                            <input type="range" min="1" max="100" value="100" class="slider" id="samplingSlider">
+                            <span class="slider-value" id="samplingValue">100%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Memory Optimization</label>
+                        <select class="control-input" id="memoryOption">
+                            <option value="balanced">Balanced (Recommended)</option>
+                            <option value="performance">Performance (More RAM)</option>
+                            <option value="conservative">Conservative (Less RAM)</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-success" id="processDataBtn">
+                        <i>⚡</i> Process Data
+                    </button>
+                </div>
             </div>
             
-            <div id="dataPreview" class="data-preview hidden">
-                <h3>Data Preview</h3>
-                <div id="previewTable"></div>
+            <div id="dataPreview" class="hidden">
+                <div class="section-header">
+                    <h3 class="section-title">Data Preview</h3>
+                    <button class="btn btn-accent" id="analyzeDataBtn">
+                        <i>🔍</i> Analyze Data
+                    </button>
+                </div>
+                <div class="data-table-container">
+                    <div id="previewTable"></div>
+                </div>
             </div>
+            
+            <div id="processingProgress" class="hidden">
+                <div class="section-header">
+                    <h3 class="section-title">Processing Data</h3>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div id="progressText">Initializing...</div>
+            </div>
+        </section>
+
+        <!-- Segmentation Section -->
+        <section id="segmentation" class="content-section hidden">
+            <div class="section-header">
+                <h2 class="section-title">Customer Segmentation</h2>
+                <div>
+                    <button class="btn" id="runSegmentationBtn">
+                        <i>🎯</i> Run Segmentation
+                    </button>
+                    <button class="btn btn-success" id="exportSegmentsBtn">
+                        <i>📥</i> Export
+                    </button>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="segments-overview">Segments Overview</div>
+                <div class="tab" data-tab="segment-details">Segment Details</div>
+                <div class="tab" data-tab="segment-comparison">Segment Comparison</div>
+            </div>
+            
+            <div class="tab-content active" id="segments-overview">
+                <div class="segments-grid">
+                    <div class="segment-card platinum">
+                        <div class="segment-header">
+                            <div class="segment-name">Platinum</div>
+                            <div class="segment-badge">12%</div>
+                        </div>
+                        <p>High-value loyal customers with frequent purchases</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">$1,240</div>
+                                <div class="stat-label">Avg. Spend</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">18</div>
+                                <div class="stat-label">Avg. Orders</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="segment-card gold">
+                        <div class="segment-header">
+                            <div class="segment-name">Gold</div>
+                            <div class="segment-badge">23%</div>
+                        </div>
+                        <p>Regular customers with good spending habits</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">$580</div>
+                                <div class="stat-label">Avg. Spend</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">9</div>
+                                <div class="stat-label">Avg. Orders</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="segment-card silver">
+                        <div class="segment-header">
+                            <div class="segment-name">Silver</div>
+                            <div class="segment-badge">35%</div>
+                        </div>
+                        <p>Occasional customers with moderate spending</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">$210</div>
+                                <div class="stat-label">Avg. Spend</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">4</div>
+                                <div class="stat-label">Avg. Orders</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="segment-card bronze">
+                        <div class="segment-header">
+                            <div class="segment-name">Bronze</div>
+                            <div class="segment-badge">30%</div>
+                        </div>
+                        <p>New or low-engagement customers</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">$85</div>
+                                <div class="stat-label">Avg. Spend</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">1.5</div>
+                                <div class="stat-label">Avg. Orders</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-grid" style="margin-top: 2rem;">
+                    <div class="chart-container">
+                        <div id="segmentation-pie-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="segmentation-bar-chart"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="segment-details">
+                <p>Detailed segment analysis will appear here after data processing.</p>
+            </div>
+            
+            <div class="tab-content" id="segment-comparison">
+                <p>Segment comparison charts and metrics will appear here after data processing.</p>
+            </div>
+        </section>
+
+        <!-- Other sections would continue similarly -->
+        
+        <!-- Analytics Section -->
+        <section id="analytics" class="content-section hidden">
+            <div class="section-header">
+                <h2 class="section-title">Advanced Analytics</h2>
+            </div>
+            <p>Advanced clustering algorithms, trend analysis, and predictive modeling would be implemented here.</p>
         </section>
         
-        <section class="card hidden" id="analysisSection">
-            <h2>Customer Segmentation Analysis</h2>
-            <div id="loading" class="loading hidden">
-                <div class="spinner"></div>
-                <p>Analyzing data and generating visualizations...</p>
+        <!-- Predictions Section -->
+        <section id="predictions" class="content-section hidden">
+            <div class="section-header">
+                <h2 class="section-title">Customer Predictions</h2>
             </div>
-            
-            <div id="errorMessage" class="error-message hidden"></div>
-            
-            <div id="chartsContainer" class="charts-container"></div>
+            <p>Churn prediction, lifetime value forecasting, and next purchase prediction would be implemented here.</p>
+        </section>
+        
+        <!-- Reports Section -->
+        <section id="reports" class="content-section hidden">
+            <div class="section-header">
+                <h2 class="section-title">Reports & Exports</h2>
+            </div>
+            <p>Custom report generation and data export functionality would be implemented here.</p>
+        </section>
+        
+        <!-- Settings Section -->
+        <section id="settings" class="content-section hidden">
+            <div class="section-header">
+                <h2 class="section-title">Settings</h2>
+            </div>
+            <p>Application configuration and user preferences would be managed here.</p>
         </section>
     </main>
-    
-    <footer>
-        <p>Retail Customer Segmentation Tool | Supporting Sustainable Development Goal 8</p>
-    </footer>
 
     <script>
+        // Global variables
+        let currentData = null;
+        let processedData = null;
+        let segmentationResults = null;
+        
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            initializeNavigation();
+            initializeEventListeners();
+            initializeSampleCharts();
+        });
+        
+        function initializeNavigation() {
+            // Navigation menu event listeners
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    
+                    // Add active class to clicked link
+                    this.classList.add('active');
+                    
+                    // Hide all sections
+                    const sections = document.querySelectorAll('.content-section');
+                    sections.forEach(section => section.classList.add('hidden'));
+                    
+                    // Show target section
+                    const target = this.getAttribute('data-target');
+                    document.getElementById(target).classList.remove('hidden');
+                });
+            });
+            
+            // Tab navigation
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all tab contents
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Show target tab content
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        function initializeEventListeners() {
+            // File upload
             const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('fileInput');
             const browseBtn = document.getElementById('browseBtn');
-            const fileInfo = document.getElementById('fileInfo');
-            const fileName = document.getElementById('fileName');
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            const dataPreview = document.getElementById('dataPreview');
-            const previewTable = document.getElementById('previewTable');
-            const analysisSection = document.getElementById('analysisSection');
-            const loading = document.getElementById('loading');
-            const errorMessage = document.getElementById('errorMessage');
-            const chartsContainer = document.getElementById('chartsContainer');
+            const processDataBtn = document.getElementById('processDataBtn');
+            const analyzeDataBtn = document.getElementById('analyzeDataBtn');
+            const samplingSlider = document.getElementById('samplingSlider');
+            const samplingValue = document.getElementById('samplingValue');
             
-            let uploadedData = null;
-            let columnNames = [];
-            
-            // Event listeners for file upload
             browseBtn.addEventListener('click', () => fileInput.click());
             
             fileInput.addEventListener('change', handleFileSelect);
@@ -328,456 +1083,261 @@
                 }
             });
             
-            analyzeBtn.addEventListener('click', analyzeData);
+            processDataBtn.addEventListener('click', processData);
+            analyzeDataBtn.addEventListener('click', analyzeData);
             
-            function handleFileSelect() {
-                if (!fileInput.files.length) return;
+            // Sampling slider
+            samplingSlider.addEventListener('input', function() {
+                samplingValue.textContent = this.value + '%';
+            });
+            
+            // Segmentation buttons
+            document.getElementById('runSegmentationBtn').addEventListener('click', runSegmentation);
+            document.getElementById('exportSegmentsBtn').addEventListener('click', exportSegments);
+        }
+        
+        function handleFileSelect() {
+            if (!fileInput.files.length) return;
+            
+            const file = fileInput.files[0];
+            document.getElementById('fileName').textContent = `File: ${file.name} (${formatFileSize(file.size)})`;
+            document.getElementById('fileInfo').classList.remove('hidden');
+            document.getElementById('dataPreview').classList.add('hidden');
+            
+            // In a real application, you would parse the file here
+            // For this demo, we'll simulate file processing
+        }
+        
+        function processData() {
+            document.getElementById('processingProgress').classList.remove('hidden');
+            simulateProgress();
+            
+            // In a real application, you would process the data here
+            // For this demo, we'll use sample data after a delay
+            setTimeout(() => {
+                document.getElementById('processingProgress').classList.add('hidden');
+                document.getElementById('dataPreview').classList.remove('hidden');
+                showDataPreview(generateSampleData());
+            }, 2000);
+        }
+        
+        function analyzeData() {
+            // Show loading state
+            const analyzeBtn = document.getElementById('analyzeDataBtn');
+            const originalText = analyzeBtn.innerHTML;
+            analyzeBtn.innerHTML = '<span class="loading"></span> Analyzing...';
+            analyzeBtn.disabled = true;
+            
+            // In a real application, you would perform data analysis here
+            // For this demo, we'll simulate analysis
+            setTimeout(() => {
+                analyzeBtn.innerHTML = originalText;
+                analyzeBtn.disabled = false;
                 
-                const file = fileInput.files[0];
-                fileName.textContent = file.name;
-                fileInfo.classList.remove('hidden');
-                dataPreview.classList.add('hidden');
-                analysisSection.classList.add('hidden');
+                // Navigate to segmentation section
+                document.querySelector('.nav-link[data-target="segmentation"]').click();
                 
-                // Parse the file based on extension
-                const fileExtension = file.name.split('.').pop().toLowerCase();
+                // Run segmentation
+                runSegmentation();
+            }, 1500);
+        }
+        
+        function runSegmentation() {
+            // Show loading state
+            const segBtn = document.getElementById('runSegmentationBtn');
+            const originalText = segBtn.innerHTML;
+            segBtn.innerHTML = '<span class="loading"></span> Segmenting...';
+            segBtn.disabled = true;
+            
+            // In a real application, you would run segmentation algorithms here
+            // For this demo, we'll use sample segmentation results
+            setTimeout(() => {
+                segBtn.innerHTML = originalText;
+                segBtn.disabled = false;
                 
-                if (fileExtension === 'csv') {
-                    parseCSV(file);
-                } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
-                    parseExcel(file);
+                // Update segmentation charts
+                updateSegmentationCharts();
+            }, 2000);
+        }
+        
+        function exportSegments() {
+            // In a real application, you would export segmentation results
+            alert('Segmentation data exported successfully!');
+        }
+        
+        function simulateProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            let width = 0;
+            
+            const interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                    progressText.textContent = 'Processing complete!';
                 } else {
-                    showError('Unsupported file format. Please upload a CSV or Excel file.');
+                    width += 5;
+                    progressBar.style.width = width + '%';
+                    progressText.textContent = `Processing... ${width}%`;
                 }
-            }
+            }, 100);
+        }
+        
+        function showDataPreview(data) {
+            // Create a simple table preview (first 10 rows)
+            const previewTable = document.getElementById('previewTable');
+            const headers = Object.keys(data[0]);
             
-            function parseCSV(file) {
-                Papa.parse(file, {
-                    header: true,
-                    dynamicTyping: true,
-                    complete: function(results) {
-                        if (results.errors.length) {
-                            showError('Error parsing CSV: ' + results.errors[0].message);
-                            return;
-                        }
-                        
-                        uploadedData = results.data;
-                        columnNames = results.meta.fields;
-                        showDataPreview();
-                    },
-                    error: function(error) {
-                        showError('Error reading CSV file: ' + error.message);
-                    }
+            let tableHTML = '<table class="data-table"><thead><tr>';
+            
+            // Create header row
+            headers.forEach(header => {
+                tableHTML += `<th>${header}</th>`;
+            });
+            
+            tableHTML += '</tr></thead><tbody>';
+            
+            // Create data rows (first 10)
+            data.slice(0, 10).forEach(row => {
+                tableHTML += '<tr>';
+                headers.forEach(header => {
+                    tableHTML += `<td>${row[header]}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            previewTable.innerHTML = tableHTML;
+        }
+        
+        function generateSampleData() {
+            // Generate sample customer data for demonstration
+            const sampleData = [];
+            const segments = ['Platinum', 'Gold', 'Silver', 'Bronze'];
+            const products = ['Laptop', 'Smartphone', 'Tablet', 'Headphones', 'Monitor'];
+            
+            for (let i = 1; i <= 100; i++) {
+                const segment = segments[Math.floor(Math.random() * segments.length)];
+                const product = products[Math.floor(Math.random() * products.length)];
+                const revenue = Math.floor(Math.random() * 1000) + 50;
+                const orders = Math.floor(Math.random() * 20) + 1;
+                
+                sampleData.push({
+                    CustomerID: `CUST${i.toString().padStart(5, '0')}`,
+                    Name: `Customer ${i}`,
+                    Segment: segment,
+                    LastPurchase: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    TotalRevenue: revenue,
+                    TotalOrders: orders,
+                    FavoriteProduct: product,
+                    Region: ['North', 'South', 'East', 'West'][Math.floor(Math.random() * 4)]
                 });
             }
             
-            function parseExcel(file) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[firstSheetName];
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                        
-                        if (jsonData.length < 2) {
-                            showError('Excel file does not contain enough data.');
-                            return;
-                        }
-                        
-                        columnNames = jsonData[0];
-                        uploadedData = [];
-                        
-                        for (let i = 1; i < jsonData.length; i++) {
-                            const row = jsonData[i];
-                            const rowObj = {};
-                            
-                            for (let j = 0; j < columnNames.length; j++) {
-                                if (j < row.length) {
-                                    rowObj[columnNames[j]] = row[j];
-                                } else {
-                                    rowObj[columnNames[j]] = null;
-                                }
-                            }
-                            
-                            uploadedData.push(rowObj);
-                        }
-                        
-                        showDataPreview();
-                    } catch (error) {
-                        showError('Error parsing Excel file: ' + error.message);
-                    }
-                };
-                
-                reader.onerror = function() {
-                    showError('Error reading Excel file.');
-                };
-                
-                reader.readAsArrayBuffer(file);
-            }
+            return sampleData;
+        }
+        
+        function initializeSampleCharts() {
+            // Sample segmentation chart
+            Plotly.newPlot('segmentation-chart', [{
+                values: [12, 23, 35, 30],
+                labels: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                type: 'pie',
+                marker: {
+                    colors: ['#E5E4E2', '#FFD700', '#C0C0C0', '#CD7F32']
+                }
+            }], {
+                title: 'Customer Segments',
+                height: 350
+            });
             
-            function showDataPreview() {
-                if (!uploadedData || uploadedData.length === 0) {
-                    showError('No data found in the file.');
-                    return;
-                }
-                
-                // Show first 10 rows
-                const previewRows = uploadedData.slice(0, 10);
-                
-                let tableHTML = '<table><thead><tr>';
-                
-                // Create header row
-                columnNames.forEach(col => {
-                    tableHTML += `<th>${col}</th>`;
-                });
-                
-                tableHTML += '</tr></thead><tbody>';
-                
-                // Create data rows
-                previewRows.forEach(row => {
-                    tableHTML += '<tr>';
-                    columnNames.forEach(col => {
-                        tableHTML += `<td>${row[col] !== null && row[col] !== undefined ? row[col] : ''}</td>`;
-                    });
-                    tableHTML += '</tr>';
-                });
-                
-                tableHTML += '</tbody></table>';
-                
-                previewTable.innerHTML = tableHTML;
-                dataPreview.classList.remove('hidden');
-            }
+            // Sample trend chart
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            Plotly.newPlot('trend-chart', [{
+                x: months,
+                y: [120, 150, 180, 160, 200, 240],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Revenue',
+                line: { color: '#3498db' }
+            }, {
+                x: months,
+                y: [85, 92, 78, 88, 94, 102],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Customers',
+                line: { color: '#2ecc71' }
+            }], {
+                title: 'Revenue & Customer Trends',
+                height: 350
+            });
             
-            function analyzeData() {
-                if (!uploadedData || uploadedData.length === 0) {
-                    showError('No data to analyze.');
-                    return;
+            // Sample RFM chart
+            Plotly.newPlot('rfm-chart', [{
+                x: [1, 2, 3, 4, 5],
+                y: [120, 85, 60, 40, 25],
+                type: 'bar',
+                name: 'Recency',
+                marker: { color: '#3498db' }
+            }, {
+                x: [1, 2, 3, 4, 5],
+                y: [25, 40, 60, 85, 120],
+                type: 'bar',
+                name: 'Frequency',
+                marker: { color: '#2ecc71' }
+            }, {
+                x: [1, 2, 3, 4, 5],
+                y: [30, 45, 75, 100, 110],
+                type: 'bar',
+                name: 'Monetary',
+                marker: { color: '#e74c3c' }
+            }], {
+                title: 'RFM Distribution',
+                barmode: 'group',
+                height: 350
+            });
+        }
+        
+        function updateSegmentationCharts() {
+            // Update segmentation pie chart
+            Plotly.newPlot('segmentation-pie-chart', [{
+                values: [12, 23, 35, 30],
+                labels: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                type: 'pie',
+                marker: {
+                    colors: ['#E5E4E2', '#FFD700', '#C0C0C0', '#CD7F32']
                 }
-                
-                analysisSection.classList.remove('hidden');
-                loading.classList.remove('hidden');
-                chartsContainer.innerHTML = '';
-                errorMessage.classList.add('hidden');
-                
-                // Simulate processing time
-                setTimeout(() => {
-                    try {
-                        generateVisualizations();
-                        loading.classList.add('hidden');
-                    } catch (error) {
-                        loading.classList.add('hidden');
-                        showError('Error during analysis: ' + error.message);
-                    }
-                }, 1000);
-            }
+            }], {
+                title: 'Customer Segments Distribution',
+                height: 350
+            });
             
-            function generateVisualizations() {
-                chartsContainer.innerHTML = '';
-                
-                // 1. Identify numeric and categorical columns
-                const numericColumns = [];
-                const categoricalColumns = [];
-                
-                columnNames.forEach(col => {
-                    const sampleValue = uploadedData[0][col];
-                    
-                    if (typeof sampleValue === 'number' && !isNaN(sampleValue)) {
-                        numericColumns.push(col);
-                    } else {
-                        // Check if it's a numeric column with string values
-                        const numericValues = uploadedData
-                            .map(row => row[col])
-                            .filter(val => val !== null && val !== undefined)
-                            .map(val => parseFloat(val));
-                        
-                        const allNumeric = numericValues.every(val => !isNaN(val));
-                        
-                        if (allNumeric && numericValues.length > 0) {
-                            numericColumns.push(col);
-                        } else {
-                            categoricalColumns.push(col);
-                        }
-                    }
-                });
-                
-                // 2. Generate histograms for numeric columns
-                numericColumns.forEach(col => {
-                    const values = uploadedData
-                        .map(row => row[col])
-                        .filter(val => val !== null && val !== undefined && !isNaN(val));
-                    
-                    if (values.length === 0) return;
-                    
-                    const trace = {
-                        x: values,
-                        type: 'histogram',
-                        name: col,
-                        marker: {
-                            color: '#3498db'
-                        }
-                    };
-                    
-                    const layout = {
-                        title: `Distribution of ${col}`,
-                        xaxis: { title: col },
-                        yaxis: { title: 'Frequency' },
-                        height: 350
-                    };
-                    
-                    const chartDiv = document.createElement('div');
-                    chartDiv.className = 'chart';
-                    chartsContainer.appendChild(chartDiv);
-                    
-                    Plotly.newPlot(chartDiv, [trace], layout);
-                });
-                
-                // 3. Generate bar charts for categorical columns (top 10 categories)
-                categoricalColumns.forEach(col => {
-                    const valueCounts = {};
-                    
-                    uploadedData.forEach(row => {
-                        const value = row[col];
-                        if (value !== null && value !== undefined) {
-                            valueCounts[value] = (valueCounts[value] || 0) + 1;
-                        }
-                    });
-                    
-                    const sortedValues = Object.entries(valueCounts)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 10);
-                    
-                    if (sortedValues.length === 0) return;
-                    
-                    const categories = sortedValues.map(item => item[0]);
-                    const counts = sortedValues.map(item => item[1]);
-                    
-                    const trace = {
-                        x: categories,
-                        y: counts,
-                        type: 'bar',
-                        marker: {
-                            color: '#e74c3c'
-                        }
-                    };
-                    
-                    const layout = {
-                        title: `Top ${Math.min(10, categories.length)} ${col} Values`,
-                        xaxis: { title: col, tickangle: -45 },
-                        yaxis: { title: 'Count' },
-                        height: 350
-                    };
-                    
-                    const chartDiv = document.createElement('div');
-                    chartDiv.className = 'chart';
-                    chartsContainer.appendChild(chartDiv);
-                    
-                    Plotly.newPlot(chartDiv, [trace], layout);
-                });
-                
-                // 4. Generate scatter plots for pairs of numeric columns (if we have at least 2)
-                if (numericColumns.length >= 2) {
-                    // Create a scatter plot matrix for the first 4 numeric columns
-                    const selectedColumns = numericColumns.slice(0, Math.min(4, numericColumns.length));
-                    const traces = [];
-                    
-                    // Create scatter plots for each pair
-                    for (let i = 0; i < selectedColumns.length; i++) {
-                        for (let j = i + 1; j < selectedColumns.length; j++) {
-                            const xCol = selectedColumns[i];
-                            const yCol = selectedColumns[j];
-                            
-                            const xValues = uploadedData
-                                .map(row => row[xCol])
-                                .filter(val => val !== null && val !== undefined && !isNaN(val));
-                            
-                            const yValues = uploadedData
-                                .map(row => row[yCol])
-                                .filter(val => val !== null && val !== undefined && !isNaN(val));
-                            
-                            // Align the data (only use rows where both values exist)
-                            const alignedData = [];
-                            for (let k = 0; k < Math.min(xValues.length, yValues.length); k++) {
-                                alignedData.push({ x: xValues[k], y: yValues[k] });
-                            }
-                            
-                            if (alignedData.length > 0) {
-                                const trace = {
-                                    x: alignedData.map(d => d.x),
-                                    y: alignedData.map(d => d.y),
-                                    mode: 'markers',
-                                    type: 'scatter',
-                                    name: `${xCol} vs ${yCol}`,
-                                    marker: {
-                                        size: 8,
-                                        opacity: 0.6
-                                    }
-                                };
-                                
-                                traces.push(trace);
-                                
-                                const layout = {
-                                    title: `${xCol} vs ${yCol}`,
-                                    xaxis: { title: xCol },
-                                    yaxis: { title: yCol },
-                                    height: 350
-                                };
-                                
-                                const chartDiv = document.createElement('div');
-                                chartDiv.className = 'chart';
-                                chartsContainer.appendChild(chartDiv);
-                                
-                                Plotly.newPlot(chartDiv, [trace], layout);
-                            }
-                        }
-                    }
-                }
-                
-                // 5. Generate a simple customer segmentation based on RFM if possible
-                // Look for common customer segmentation columns
-                const possibleSegmentColumns = [
-                    'segment', 'cluster', 'category', 'type', 'group', 
-                    'loyalty', 'status', 'tier', 'class'
-                ];
-                
-                let segmentColumn = null;
-                for (const col of possibleSegmentColumns) {
-                    if (columnNames.map(c => c.toLowerCase()).includes(col.toLowerCase())) {
-                        segmentColumn = columnNames.find(c => c.toLowerCase() === col.toLowerCase());
-                        break;
-                    }
-                }
-                
-                // If we found a segmentation column, create a pie chart
-                if (segmentColumn) {
-                    const segmentCounts = {};
-                    
-                    uploadedData.forEach(row => {
-                        const segment = row[segmentColumn];
-                        if (segment !== null && segment !== undefined) {
-                            segmentCounts[segment] = (segmentCounts[segment] || 0) + 1;
-                        }
-                    });
-                    
-                    const segments = Object.keys(segmentCounts);
-                    const counts = Object.values(segmentCounts);
-                    
-                    const trace = {
-                        labels: segments,
-                        values: counts,
-                        type: 'pie',
-                        hole: 0.4,
-                        marker: {
-                            colors: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
-                        }
-                    };
-                    
-                    const layout = {
-                        title: `Customer Segments (${segmentColumn})`,
-                        height: 350
-                    };
-                    
-                    const chartDiv = document.createElement('div');
-                    chartDiv.className = 'chart';
-                    chartsContainer.appendChild(chartDiv);
-                    
-                    Plotly.newPlot(chartDiv, [trace], layout);
-                }
-                
-                // 6. If we have enough numeric columns, create a correlation heatmap
-                if (numericColumns.length >= 3) {
-                    // Calculate correlations
-                    const correlationMatrix = [];
-                    const selectedNumericColumns = numericColumns.slice(0, Math.min(8, numericColumns.length));
-                    
-                    // Initialize matrix
-                    for (let i = 0; i < selectedNumericColumns.length; i++) {
-                        correlationMatrix[i] = [];
-                        for (let j = 0; j < selectedNumericColumns.length; j++) {
-                            correlationMatrix[i][j] = 0;
-                        }
-                    }
-                    
-                    // Calculate correlations
-                    for (let i = 0; i < selectedNumericColumns.length; i++) {
-                        for (let j = i; j < selectedNumericColumns.length; j++) {
-                            const col1 = selectedNumericColumns[i];
-                            const col2 = selectedNumericColumns[j];
-                            
-                            const values1 = uploadedData
-                                .map(row => row[col1])
-                                .filter(val => val !== null && val !== undefined && !isNaN(val));
-                            
-                            const values2 = uploadedData
-                                .map(row => row[col2])
-                                .filter(val => val !== null && val !== undefined && !isNaN(val));
-                            
-                            // Align the data
-                            const alignedData = [];
-                            for (let k = 0; k < Math.min(values1.length, values2.length); k++) {
-                                alignedData.push({ x: values1[k], y: values2[k] });
-                            }
-                            
-                            if (alignedData.length > 1) {
-                                const correlation = calculateCorrelation(
-                                    alignedData.map(d => d.x),
-                                    alignedData.map(d => d.y)
-                                );
-                                
-                                correlationMatrix[i][j] = correlation;
-                                correlationMatrix[j][i] = correlation;
-                            }
-                        }
-                    }
-                    
-                    const trace = {
-                        z: correlationMatrix,
-                        x: selectedNumericColumns,
-                        y: selectedNumericColumns,
-                        type: 'heatmap',
-                        colorscale: 'RdBu',
-                        zmin: -1,
-                        zmax: 1
-                    };
-                    
-                    const layout = {
-                        title: 'Correlation Matrix',
-                        height: 400
-                    };
-                    
-                    const chartDiv = document.createElement('div');
-                    chartDiv.className = 'chart';
-                    chartsContainer.appendChild(chartDiv);
-                    
-                    Plotly.newPlot(chartDiv, [trace], layout);
-                }
-            }
-            
-            function calculateCorrelation(x, y) {
-                const n = x.length;
-                let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
-                
-                for (let i = 0; i < n; i++) {
-                    sumX += x[i];
-                    sumY += y[i];
-                    sumXY += x[i] * y[i];
-                    sumX2 += x[i] * x[i];
-                    sumY2 += y[i] * y[i];
-                }
-                
-                const numerator = n * sumXY - sumX * sumY;
-                const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-                
-                return denominator === 0 ? 0 : numerator / denominator;
-            }
-            
-            function showError(message) {
-                errorMessage.textContent = message;
-                errorMessage.classList.remove('hidden');
-            }
-        });
+            // Update segmentation bar chart
+            Plotly.newPlot('segmentation-bar-chart', [{
+                x: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                y: [1240, 580, 210, 85],
+                type: 'bar',
+                name: 'Avg. Revenue',
+                marker: { color: '#3498db' }
+            }, {
+                x: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                y: [18, 9, 4, 1.5],
+                type: 'bar',
+                name: 'Avg. Orders',
+                marker: { color: '#2ecc71' }
+            }], {
+                title: 'Segment Performance Metrics',
+                barmode: 'group',
+                height: 350
+            });
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
     </script>
 </body>
 </html>
