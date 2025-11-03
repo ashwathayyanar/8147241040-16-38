@@ -3,1467 +3,780 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retail Customer Segmentation | Data Warehousing & Analytics</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Retail Customer Segmentation</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --secondary: #7209b7;
-            --accent: #f72585;
-            --success: #4cc9f0;
-            --warning: #f8961e;
-            --danger: #e63946;
-            --dark: #1a1a2e;
-            --darker: #16213e;
-            --light: #f8f9fa;
-            --gray: #6c757d;
-            --gray-light: #adb5bd;
-            --card-bg: rgba(255, 255, 255, 0.08);
-            --card-border: rgba(255, 255, 255, 0.12);
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            --shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.2);
-            --radius: 12px;
-            --radius-lg: 20px;
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
         }
-
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--darker), var(--dark));
-            color: var(--light);
+            background-color: #f5f7fa;
+            color: var(--dark);
             line-height: 1.6;
-            min-height: 100vh;
-            overflow-x: hidden;
         }
-
-        /* Header Styles */
+        
         header {
-            background: rgba(26, 26, 46, 0.8);
-            backdrop-filter: blur(10px);
-            padding: 1.5rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        .header-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
-        }
-
-        .logo-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--primary), var(--success));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .nav-link {
-            color: var(--gray-light);
-            text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition);
-            position: relative;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            color: var(--light);
-        }
-
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: var(--primary);
-            border-radius: 2px;
-        }
-
-        /* Hero Section */
-        .hero {
-            padding: 4rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem 0;
             text-align: center;
-            max-width: 900px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 0 2rem;
         }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-            background: linear-gradient(90deg, var(--primary), var(--success), var(--accent));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation: gradient-shift 5s ease infinite;
-            background-size: 200% auto;
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
         }
-
-        @keyframes gradient-shift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .hero p {
+        
+        .subtitle {
             font-size: 1.2rem;
-            color: var(--gray-light);
-            margin-bottom: 2rem;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
+            opacity: 0.9;
+            margin-bottom: 1rem;
         }
-
+        
         .sdg-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(76, 201, 240, 0.1);
-            border: 1px solid rgba(76, 201, 240, 0.3);
-            color: var(--success);
-            padding: 0.5rem 1.2rem;
-            border-radius: 50px;
-            font-weight: 600;
-            margin-top: 1rem;
-        }
-
-        /* Main Content */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 2rem 4rem;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--card-border);
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .card-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-title i {
-            color: var(--primary);
-        }
-
-        /* Data Input Section */
-        .data-input-section {
-            grid-column: 1 / -1;
-        }
-
-        .input-cards {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .input-card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            border: 1px solid var(--card-border);
-            padding: 1.5rem;
-            transition: var(--transition);
-        }
-
-        .input-card:hover {
-            border-color: var(--primary);
-        }
-
-        .input-header {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            margin-bottom: 1rem;
-        }
-
-        .input-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: rgba(67, 97, 238, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-        }
-
-        .input-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .url-input {
-            flex: 1;
-            padding: 0.8rem 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius);
-            color: var(--light);
-            font-family: inherit;
-            transition: var(--transition);
-        }
-
-        .url-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
-        }
-
-        .btn {
-            padding: 0.8rem 1.5rem;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            font-family: inherit;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--card-border);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--primary);
-        }
-
-        /* Visualization Section */
-        .visualization-section {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-        }
-
-        .chart-container {
-            background: var(--card-bg);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--card-border);
-            padding: 1.5rem;
-            grid-column: span 1;
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .chart-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .chart-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .chart-action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            color: var(--gray-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .chart-action-btn:hover {
-            color: var(--light);
-            border-color: var(--primary);
-        }
-
-        .chart-wrapper {
-            position: relative;
-            height: 250px;
-        }
-
-        /* Insights Sidebar */
-        .insights-sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .insight-card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            border: 1px solid var(--card-border);
-            padding: 1.5rem;
-            transition: var(--transition);
-        }
-
-        .insight-card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow);
-        }
-
-        .insight-header {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            margin-bottom: 1rem;
-        }
-
-        .insight-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .insight-icon.premium {
-            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
-        }
-
-        .insight-icon.regular {
-            background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
-        }
-
-        .insight-icon.budget {
-            background: linear-gradient(135deg, #ffecd2, #fcb69f);
-        }
-
-        .insight-title {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .insight-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin: 0.5rem 0;
-        }
-
-        .insight-metric {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            display: inline-block;
+            background-color: var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
             font-size: 0.9rem;
-            color: var(--gray-light);
         }
-
-        .metric-change {
-            display: flex;
-            align-items: center;
-            gap: 0.2rem;
-            font-weight: 600;
+        
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
         }
-
-        .metric-change.positive {
-            color: var(--success);
-        }
-
-        .metric-change.negative {
-            color: var(--danger);
-        }
-
-        /* Segments Section */
-        .segments-section {
-            grid-column: 1 / -1;
-            margin-top: 1rem;
-        }
-
-        .segments-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .segment-card {
-            background: var(--card-bg);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--card-border);
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             padding: 1.5rem;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
+            margin-bottom: 2rem;
         }
-
-        .segment-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
+        
+        h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light);
         }
-
-        .segment-card.premium::before {
-            background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+        
+        .upload-area {
+            border: 2px dashed var(--secondary);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
-
-        .segment-card.regular::before {
-            background: linear-gradient(90deg, #a1c4fd, #c2e9fb);
+        
+        .upload-area:hover {
+            background-color: rgba(52, 152, 219, 0.05);
         }
-
-        .segment-card.budget::before {
-            background: linear-gradient(90deg, #ffecd2, #fcb69f);
+        
+        .upload-area.dragover {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-color: var(--accent);
         }
-
-        .segment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--secondary);
             margin-bottom: 1rem;
         }
-
-        .segment-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .segment-badge {
-            padding: 0.3rem 0.8rem;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .segment-badge.premium {
-            background: rgba(255, 154, 158, 0.2);
-            color: #ff9a9e;
-        }
-
-        .segment-badge.regular {
-            background: rgba(161, 196, 253, 0.2);
-            color: #a1c4fd;
-        }
-
-        .segment-badge.budget {
-            background: rgba(255, 236, 210, 0.2);
-            color: #fcb69f;
-        }
-
-        .segment-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.3rem;
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: var(--gray-light);
-        }
-
-        /* Footer */
-        footer {
-            background: rgba(22, 33, 62, 0.8);
-            border-top: 1px solid var(--card-border);
-            padding: 2rem;
-            margin-top: 4rem;
-        }
-
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .footer-logo {
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--primary), var(--success));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .footer-link {
-            color: var(--gray-light);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-
-        .footer-link:hover {
-            color: var(--light);
-        }
-
-        /* Data Preview */
-        .data-preview {
-            margin-top: 1.5rem;
-            overflow-x: auto;
+        
+        .file-input {
             display: none;
         }
-
-        .preview-table {
+        
+        .btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-accent {
+            background-color: var(--accent);
+        }
+        
+        .btn-accent:hover {
+            background-color: #c0392b;
+        }
+        
+        .data-preview {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        
+        table {
             width: 100%;
             border-collapse: collapse;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius);
-            overflow: hidden;
         }
-
-        .preview-table th, .preview-table td {
-            padding: 0.8rem 1rem;
+        
+        th, td {
+            padding: 0.75rem;
             text-align: left;
-            border-bottom: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--light);
         }
-
-        .preview-table th {
-            background: rgba(255, 255, 255, 0.1);
-            font-weight: 600;
+        
+        th {
+            background-color: var(--light);
+            font-weight: bold;
         }
-
-        .preview-table tr:hover {
-            background: rgba(255, 255, 255, 0.05);
+        
+        tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
         }
-
-        /* Loading Spinner */
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .chart {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            height: 400px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+        
         .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--secondary);
             border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s ease-in-out infinite;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
         }
-
+        
         @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-            
-            .visualization-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .input-cards {
-                grid-template-columns: 1fr;
-            }
-            
-            .segments-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header-container {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .nav-links {
-                gap: 1rem;
-            }
-            
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-        }
-
-        /* Animation for cards */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
             to {
-                opacity: 1;
-                transform: translateY(0);
+                transform: rotate(360deg);
             }
         }
-
-        .card, .input-card, .segment-card, .insight-card {
-            animation: fadeInUp 0.5s ease forwards;
+        
+        .error-message {
+            background-color: #ffeaea;
+            color: var(--accent);
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart {
+                height: 300px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header>
-        <div class="header-container">
-            <div class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-chart-pie"></i>
-                </div>
-                <div class="logo-text">RetailSegments</div>
-            </div>
-            <nav class="nav-links">
-                <a href="#" class="nav-link active">Dashboard</a>
-                <a href="#" class="nav-link">Segments</a>
-                <a href="#" class="nav-link">Analytics</a>
-                <a href="#" class="nav-link">Reports</a>
-                <a href="#" class="nav-link">Settings</a>
-            </nav>
+        <div class="header-content">
+            <h1>Retail Customer Segmentation</h1>
+            <p class="subtitle">Using Data Warehousing & Purchase Pattern Analysis</p>
+            <div class="sdg-badge">SDG 8: Decent Work & Economic Growth</div>
         </div>
     </header>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <h1>Retail Customer Segmentation</h1>
-        <p>Advanced data warehousing and analytics platform to identify customer segments, analyze purchase patterns, and drive business growth</p>
-        <div class="sdg-badge">
-            <i class="fas fa-bullseye"></i>
-            SDG 8: Decent Work & Economic Growth
-        </div>
-    </section>
-
-    <!-- Main Content -->
-    <div class="container">
-        <!-- Data Input Section -->
-        <section class="data-input-section card">
-            <div class="card-header">
-                <h2 class="card-title"><i class="fas fa-database"></i> Data Source</h2>
-            </div>
-            <div class="input-cards">
-                <div class="input-card">
-                    <div class="input-header">
-                        <div class="input-icon">
-                            <i class="fas fa-link"></i>
-                        </div>
-                        <h3 class="input-title">Load from URL</h3>
-                    </div>
-                    <div class="input-group">
-                        <input type="url" class="url-input" id="dataUrl" placeholder="https://example.com/data.csv">
-                        <button class="btn" id="loadUrlBtn">
-                            <i class="fas fa-cloud-download-alt"></i> Load
-                        </button>
-                    </div>
-                </div>
-                <div class="input-card">
-                    <div class="input-header">
-                        <div class="input-icon">
-                            <i class="fas fa-upload"></i>
-                        </div>
-                        <h3 class="input-title">Upload File</h3>
-                    </div>
-                    <div class="input-group">
-                        <input type="file" class="url-input" id="fileInput" accept=".csv,.xlsx,.xls">
-                        <button class="btn btn-secondary" id="loadFileBtn">
-                            <i class="fas fa-file-import"></i> Upload
-                        </button>
-                    </div>
-                </div>
+    
+    <main>
+        <section class="card">
+            <h2>Upload Your Data</h2>
+            <p>Upload a CSV or Excel file containing your customer purchase data. Our system will automatically analyze the data and generate customer segmentation visualizations.</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📊</div>
+                <h3>Drag & Drop your file here</h3>
+                <p>or</p>
+                <button class="btn" id="browseBtn">Browse Files</button>
+                <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls">
+                <p>Supported formats: CSV, XLSX, XLS</p>
             </div>
             
-            <!-- Data Preview -->
-            <div id="dataPreview" class="data-preview">
-                <h3 style="margin-bottom: 1rem;">Data Preview</h3>
-                <table class="preview-table" id="previewTable">
-                    <thead id="previewHeader"></thead>
-                    <tbody id="previewBody"></tbody>
-                </table>
+            <div id="fileInfo" class="hidden">
+                <p><strong>Selected file:</strong> <span id="fileName"></span></p>
+                <button class="btn btn-accent" id="analyzeBtn">Analyze Data</button>
+            </div>
+            
+            <div id="dataPreview" class="data-preview hidden">
+                <h3>Data Preview</h3>
+                <div id="previewTable"></div>
             </div>
         </section>
-
-        <!-- Dashboard -->
-        <div class="dashboard">
-            <!-- Visualization Section -->
-            <section class="visualization-section">
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h3 class="chart-title">Customer Segments</h3>
-                        <div class="chart-actions">
-                            <button class="chart-action-btn"><i class="fas fa-expand"></i></button>
-                            <button class="chart-action-btn"><i class="fas fa-download"></i></button>
-                        </div>
-                    </div>
-                    <div class="chart-wrapper">
-                        <canvas id="segmentChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h3 class="chart-title">Purchase Frequency</h3>
-                        <div class="chart-actions">
-                            <button class="chart-action-btn"><i class="fas fa-expand"></i></button>
-                            <button class="chart-action-btn"><i class="fas fa-download"></i></button>
-                        </div>
-                    </div>
-                    <div class="chart-wrapper">
-                        <canvas id="frequencyChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h3 class="chart-title">Average Spending</h3>
-                        <div class="chart-actions">
-                            <button class="chart-action-btn"><i class="fas fa-expand"></i></button>
-                            <button class="chart-action-btn"><i class="fas fa-download"></i></button>
-                        </div>
-                    </div>
-                    <div class="chart-wrapper">
-                        <canvas id="spendingChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h3 class="chart-title">Category Preferences</h3>
-                        <div class="chart-actions">
-                            <button class="chart-action-btn"><i class="fas fa-expand"></i></button>
-                            <button class="chart-action-btn"><i class="fas fa-download"></i></button>
-                        </div>
-                    </div>
-                    <div class="chart-wrapper">
-                        <canvas id="categoryChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Insights Sidebar -->
-            <section class="insights-sidebar">
-                <div class="insight-card">
-                    <div class="insight-header">
-                        <div class="insight-icon premium">
-                            <i class="fas fa-crown"></i>
-                        </div>
-                        <h3 class="insight-title">Premium Customers</h3>
-                    </div>
-                    <div class="insight-value">24.7%</div>
-                    <div class="insight-metric">
-                        <span class="metric-change positive">
-                            <i class="fas fa-arrow-up"></i> 5.2%
-                        </span>
-                        <span>from last month</span>
-                    </div>
-                </div>
-                <div class="insight-card">
-                    <div class="insight-header">
-                        <div class="insight-icon regular">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <h3 class="insight-title">Regular Shoppers</h3>
-                    </div>
-                    <div class="insight-value">42.3%</div>
-                    <div class="insight-metric">
-                        <span class="metric-change positive">
-                            <i class="fas fa-arrow-up"></i> 2.1%
-                        </span>
-                        <span>from last month</span>
-                    </div>
-                </div>
-                <div class="insight-card">
-                    <div class="insight-header">
-                        <div class="insight-icon budget">
-                            <i class="fas fa-tags"></i>
-                        </div>
-                        <h3 class="insight-title">Budget Conscious</h3>
-                    </div>
-                    <div class="insight-value">33.0%</div>
-                    <div class="insight-metric">
-                        <span class="metric-change negative">
-                            <i class="fas fa-arrow-down"></i> 1.8%
-                        </span>
-                        <span>from last month</span>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- Segments Section -->
-        <section class="segments-section card">
-            <div class="card-header">
-                <h2 class="card-title"><i class="fas fa-users"></i> Customer Segments</h2>
+        
+        <section class="card hidden" id="analysisSection">
+            <h2>Customer Segmentation Analysis</h2>
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Analyzing data and generating visualizations...</p>
             </div>
-            <div class="segments-grid">
-                <div class="segment-card premium">
-                    <div class="segment-header">
-                        <h3 class="segment-title">Premium Customers</h3>
-                        <span class="segment-badge premium">High Value</span>
-                    </div>
-                    <p>High-income customers who prefer premium products and are less price-sensitive. They value quality and exclusive experiences.</p>
-                    <div class="segment-stats">
-                        <div class="stat">
-                            <div class="stat-value">$245</div>
-                            <div class="stat-label">Avg. Spend</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value">4.2</div>
-                            <div class="stat-label">Visits/Month</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="segment-card regular">
-                    <div class="segment-header">
-                        <h3 class="segment-title">Regular Shoppers</h3>
-                        <span class="segment-badge regular">Loyal</span>
-                    </div>
-                    <p>Frequent shoppers with moderate spending. They are brand loyal and respond well to loyalty programs and personalized offers.</p>
-                    <div class="segment-stats">
-                        <div class="stat">
-                            <div class="stat-value">$85</div>
-                            <div class="stat-label">Avg. Spend</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value">12.5</div>
-                            <div class="stat-label">Visits/Month</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="segment-card budget">
-                    <div class="segment-header">
-                        <h3 class="segment-title">Budget Conscious</h3>
-                        <span class="segment-badge budget">Value Seekers</span>
-                    </div>
-                    <p>Price-sensitive customers who prioritize discounts and value deals. They have lower average spending but represent a large segment.</p>
-                    <div class="segment-stats">
-                        <div class="stat">
-                            <div class="stat-value">$42</div>
-                            <div class="stat-label">Avg. Spend</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value">8.3</div>
-                            <div class="stat-label">Visits/Month</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
+            <div id="errorMessage" class="error-message hidden"></div>
+            
+            <div id="chartsContainer" class="charts-container"></div>
         </section>
-    </div>
-
-    <!-- Footer -->
+    </main>
+    
     <footer>
-        <div class="footer-content">
-            <div class="footer-logo">RetailSegments</div>
-            <div class="footer-links">
-                <a href="#" class="footer-link">Privacy Policy</a>
-                <a href="#" class="footer-link">Terms of Service</a>
-                <a href="#" class="footer-link">Contact Us</a>
-            </div>
-        </div>
+        <p>Retail Customer Segmentation Tool | Supporting Sustainable Development Goal 8</p>
     </footer>
 
     <script>
-        // Chart instances
-        let segmentChart, frequencyChart, spendingChart, categoryChart;
-        
-        // DOM Elements
-        const dataUrlInput = document.getElementById('dataUrl');
-        const loadUrlBtn = document.getElementById('loadUrlBtn');
-        const fileInput = document.getElementById('fileInput');
-        const loadFileBtn = document.getElementById('loadFileBtn');
-        const dataPreview = document.getElementById('dataPreview');
-        const previewHeader = document.getElementById('previewHeader');
-        const previewBody = document.getElementById('previewBody');
-        
-        // Event Listeners
-        loadUrlBtn.addEventListener('click', loadDataFromUrl);
-        loadFileBtn.addEventListener('click', loadDataFromFile);
-        
-        // Function to load data from URL
-        function loadDataFromUrl() {
-            const url = dataUrlInput.value.trim();
-            if (!url) {
-                alert('Please enter a valid URL');
-                return;
-            }
-            
-            // Show loading state
-            const originalText = loadUrlBtn.innerHTML;
-            loadUrlBtn.innerHTML = '<span class="spinner"></span> Loading...';
-            loadUrlBtn.disabled = true;
-            
-            // Check if it's a CSV or Excel file
-            if (url.toLowerCase().endsWith('.csv')) {
-                loadCSVFromUrl(url);
-            } else if (url.toLowerCase().endsWith('.xlsx') || url.toLowerCase().endsWith('.xls')) {
-                loadExcelFromUrl(url);
-            } else {
-                alert('Please provide a URL to a CSV or Excel file');
-                resetButtonState();
-            }
-        }
-        
-        // Function to load data from file
-        function loadDataFromFile() {
-            const file = fileInput.files[0];
-            if (!file) {
-                alert('Please select a file');
-                return;
-            }
-            
-            // Show loading state
-            const originalText = loadFileBtn.innerHTML;
-            loadFileBtn.innerHTML = '<span class="spinner"></span> Processing...';
-            loadFileBtn.disabled = true;
-            
-            const fileName = file.name.toLowerCase();
-            if (fileName.endsWith('.csv')) {
-                loadCSVFromFile(file);
-            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-                loadExcelFromFile(file);
-            } else {
-                alert('Please select a CSV or Excel file');
-                resetButtonState();
-            }
-        }
-        
-        // Reset button state
-        function resetButtonState() {
-            loadUrlBtn.innerHTML = '<i class="fas fa-cloud-download-alt"></i> Load';
-            loadUrlBtn.disabled = false;
-            loadFileBtn.innerHTML = '<i class="fas fa-file-import"></i> Upload';
-            loadFileBtn.disabled = false;
-        }
-        
-        // Load CSV from URL
-        function loadCSVFromUrl(url) {
-            Papa.parse(url, {
-                download: true,
-                header: true,
-                dynamicTyping: true,
-                complete: function(results) {
-                    processData(results.data, results.meta.fields);
-                    resetButtonState();
-                },
-                error: function(error) {
-                    alert('Error loading CSV: ' + error);
-                    resetButtonState();
-                }
-            });
-        }
-        
-        // Load CSV from file
-        function loadCSVFromFile(file) {
-            Papa.parse(file, {
-                header: true,
-                dynamicTyping: true,
-                complete: function(results) {
-                    processData(results.data, results.meta.fields);
-                    resetButtonState();
-                },
-                error: function(error) {
-                    alert('Error parsing CSV: ' + error);
-                    resetButtonState();
-                }
-            });
-        }
-        
-        // Load Excel from URL
-        function loadExcelFromUrl(url) {
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.arrayBuffer();
-                })
-                .then(data => {
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    processExcelWorkbook(workbook);
-                    resetButtonState();
-                })
-                .catch(error => {
-                    alert('Error loading Excel file: ' + error);
-                    resetButtonState();
-                });
-        }
-        
-        // Load Excel from file
-        function loadExcelFromFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                processExcelWorkbook(workbook);
-                resetButtonState();
-            };
-            reader.readAsArrayBuffer(file);
-        }
-        
-        // Process Excel workbook
-        function processExcelWorkbook(workbook) {
-            // Use the first sheet
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
-            if (jsonData.length < 2) {
-                alert('Excel file does not contain enough data');
-                return;
-            }
-            
-            const headers = jsonData[0];
-            const data = jsonData.slice(1).map(row => {
-                const obj = {};
-                headers.forEach((header, index) => {
-                    obj[header] = row[index] || '';
-                });
-                return obj;
-            });
-            
-            processData(data, headers);
-        }
-        
-        // Process and display data
-        function processData(data, headers) {
-            // Show data preview
-            displayDataPreview(data, headers);
-            dataPreview.style.display = 'block';
-            
-            // Generate visualizations based on the data
-            generateVisualizations(data, headers);
-        }
-        
-        // Display data preview
-        function displayDataPreview(data, headers) {
-            // Clear previous preview
-            previewHeader.innerHTML = '';
-            previewBody.innerHTML = '';
-            
-            // Add headers
-            headers.forEach(header => {
-                const th = document.createElement('th');
-                th.textContent = header;
-                previewHeader.appendChild(th);
-            });
-            
-            // Add data rows (limit to 10 for preview)
-            const previewData = data.slice(0, 10);
-            previewData.forEach(row => {
-                const tr = document.createElement('tr');
-                headers.forEach(header => {
-                    const td = document.createElement('td');
-                    td.textContent = row[header] !== undefined ? row[header] : '';
-                    tr.appendChild(td);
-                });
-                previewBody.appendChild(tr);
-            });
-        }
-        
-        // Generate visualizations based on actual data
-        function generateVisualizations(data, headers) {
-            // Analyze the data to extract meaningful information
-            const analysis = analyzeCustomerData(data, headers);
-            
-            // Destroy existing charts if they exist
-            if (segmentChart) segmentChart.destroy();
-            if (frequencyChart) frequencyChart.destroy();
-            if (spendingChart) spendingChart.destroy();
-            if (categoryChart) categoryChart.destroy();
-            
-            // Customer Segments by Spending
-            const segmentCtx = document.getElementById('segmentChart').getContext('2d');
-            segmentChart = new Chart(segmentCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: analysis.segments.labels,
-                    datasets: [{
-                        data: analysis.segments.data,
-                        backgroundColor: analysis.segments.colors,
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#f8f9fa',
-                                padding: 20,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
-                    },
-                    cutout: '70%'
-                }
-            });
-            
-            // Purchase Frequency Distribution
-            const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
-            frequencyChart = new Chart(frequencyCtx, {
-                type: 'bar',
-                data: {
-                    labels: analysis.frequency.labels,
-                    datasets: [{
-                        label: 'Number of Customers',
-                        data: analysis.frequency.data,
-                        backgroundColor: '#4361ee',
-                        borderColor: '#3a56d4',
-                        borderWidth: 0,
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: '#adb5bd'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#adb5bd'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-            
-            // Average Spending by Segment
-            const spendingCtx = document.getElementById('spendingChart').getContext('2d');
-            spendingChart = new Chart(spendingCtx, {
-                type: 'bar',
-                data: {
-                    labels: analysis.spending.labels,
-                    datasets: [{
-                        label: 'Average Spending ($)',
-                        data: analysis.spending.data,
-                        backgroundColor: analysis.spending.colors,
-                        borderWidth: 0,
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: '#adb5bd'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#adb5bd'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-            
-            // Product Category Preferences
-            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-            categoryChart = new Chart(categoryCtx, {
-                type: 'polarArea',
-                data: {
-                    labels: analysis.categories.labels,
-                    datasets: [{
-                        data: analysis.categories.data,
-                        backgroundColor: analysis.categories.colors,
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#f8f9fa',
-                                padding: 20,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        r: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Analyze customer data to extract insights
-        function analyzeCustomerData(data, headers) {
-            // This is a simplified analysis - in a real application, this would be more sophisticated
-            
-            // Try to identify relevant columns
-            const amountColumn = findColumn(headers, ['amount', 'spending', 'price', 'total']);
-            const segmentColumn = findColumn(headers, ['segment', 'type', 'category', 'group']);
-            const frequencyColumn = findColumn(headers, ['frequency', 'visits', 'purchases']);
-            const categoryColumn = findColumn(headers, ['category', 'product', 'item']);
-            
-            // Default to sample data if we can't find relevant columns
-            if (!amountColumn || !segmentColumn) {
-                return getSampleAnalysis();
-            }
-            
-            // Analyze segments
-            const segments = {};
-            data.forEach(row => {
-                const segment = row[segmentColumn] || 'Unknown';
-                segments[segment] = (segments[segment] || 0) + 1;
-            });
-            
-            const segmentLabels = Object.keys(segments);
-            const segmentData = Object.values(segments);
-            const segmentColors = ['#ff9a9e', '#a1c4fd', '#ffecd2', '#c2e9fb', '#fad0c4'];
-            
-            // Analyze frequency (simplified)
-            const frequencyLabels = ['1-2 times', '3-5 times', '6-10 times', '10+ times'];
-            const frequencyData = [120, 180, 120, 80];
-            
-            // Analyze spending by segment
-            const spendingBySegment = {};
-            const countBySegment = {};
-            
-            data.forEach(row => {
-                const segment = row[segmentColumn] || 'Unknown';
-                const amount = parseFloat(row[amountColumn]) || 0;
-                
-                spendingBySegment[segment] = (spendingBySegment[segment] || 0) + amount;
-                countBySegment[segment] = (countBySegment[segment] || 0) + 1;
-            });
-            
-            const spendingLabels = [];
-            const spendingData = [];
-            const spendingColors = [];
-            
-            segmentLabels.forEach((segment, index) => {
-                spendingLabels.push(segment);
-                const avgSpending = spendingBySegment[segment] / countBySegment[segment];
-                spendingData.push(parseFloat(avgSpending.toFixed(2)));
-                spendingColors.push(segmentColors[index % segmentColors.length]);
-            });
-            
-            // Analyze categories
-            const categories = {};
-            if (categoryColumn) {
-                data.forEach(row => {
-                    const category = row[categoryColumn] || 'Unknown';
-                    categories[category] = (categories[category] || 0) + 1;
-                });
-            } else {
-                // Use sample categories if no category column found
-                categories['Electronics'] = 35;
-                categories['Fashion'] = 25;
-                categories['Home'] = 20;
-                categories['Groceries'] = 15;
-                categories['Sports'] = 5;
-            }
-            
-            const categoryLabels = Object.keys(categories);
-            const categoryData = Object.values(categories);
-            const categoryColors = ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#f8961e'];
-            
-            return {
-                segments: {
-                    labels: segmentLabels,
-                    data: segmentData,
-                    colors: segmentColors
-                },
-                frequency: {
-                    labels: frequencyLabels,
-                    data: frequencyData
-                },
-                spending: {
-                    labels: spendingLabels,
-                    data: spendingData,
-                    colors: spendingColors
-                },
-                categories: {
-                    labels: categoryLabels,
-                    data: categoryData,
-                    colors: categoryColors
-                }
-            };
-        }
-        
-        // Helper function to find a column by possible names
-        function findColumn(headers, possibleNames) {
-            const lowerHeaders = headers.map(h => h.toLowerCase());
-            for (let name of possibleNames) {
-                const index = lowerHeaders.indexOf(name.toLowerCase());
-                if (index !== -1) return headers[index];
-            }
-            return null;
-        }
-        
-        // Sample analysis data
-        function getSampleAnalysis() {
-            const segments = ['Premium', 'Regular', 'Budget'];
-            const segmentCounts = [75, 225, 200];
-            const segmentColors = ['#ff9a9e', '#a1c4fd', '#ffecd2'];
-            
-            const frequencyLabels = ['1-2 times', '3-5 times', '6-10 times', '10+ times'];
-            const frequencyData = [120, 180, 120, 80];
-            
-            const avgSpending = [245, 85, 42];
-            
-            const categories = ['Electronics', 'Fashion', 'Home', 'Groceries', 'Sports'];
-            const categoryData = [35, 25, 20, 15, 5];
-            const categoryColors = ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#f8961e'];
-            
-            return {
-                segments: {
-                    labels: segments,
-                    data: segmentCounts,
-                    colors: segmentColors
-                },
-                frequency: {
-                    labels: frequencyLabels,
-                    data: frequencyData
-                },
-                spending: {
-                    labels: segments,
-                    data: avgSpending,
-                    colors: segmentColors
-                },
-                categories: {
-                    labels: categories,
-                    data: categoryData,
-                    colors: categoryColors
-                }
-            };
-        }
-        
-        // Initialize with sample data on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Generate sample visualizations
-            generateVisualizations([], []);
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const browseBtn = document.getElementById('browseBtn');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const dataPreview = document.getElementById('dataPreview');
+            const previewTable = document.getElementById('previewTable');
+            const analysisSection = document.getElementById('analysisSection');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const chartsContainer = document.getElementById('chartsContainer');
+            
+            let uploadedData = null;
+            let columnNames = [];
+            
+            // Event listeners for file upload
+            browseBtn.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect();
+                }
+            });
+            
+            analyzeBtn.addEventListener('click', analyzeData);
+            
+            function handleFileSelect() {
+                if (!fileInput.files.length) return;
+                
+                const file = fileInput.files[0];
+                fileName.textContent = file.name;
+                fileInfo.classList.remove('hidden');
+                dataPreview.classList.add('hidden');
+                analysisSection.classList.add('hidden');
+                
+                // Parse the file based on extension
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                
+                if (fileExtension === 'csv') {
+                    parseCSV(file);
+                } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+                    parseExcel(file);
+                } else {
+                    showError('Unsupported file format. Please upload a CSV or Excel file.');
+                }
+            }
+            
+            function parseCSV(file) {
+                Papa.parse(file, {
+                    header: true,
+                    dynamicTyping: true,
+                    complete: function(results) {
+                        if (results.errors.length) {
+                            showError('Error parsing CSV: ' + results.errors[0].message);
+                            return;
+                        }
+                        
+                        uploadedData = results.data;
+                        columnNames = results.meta.fields;
+                        showDataPreview();
+                    },
+                    error: function(error) {
+                        showError('Error reading CSV file: ' + error.message);
+                    }
+                });
+            }
+            
+            function parseExcel(file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        if (jsonData.length < 2) {
+                            showError('Excel file does not contain enough data.');
+                            return;
+                        }
+                        
+                        columnNames = jsonData[0];
+                        uploadedData = [];
+                        
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            const rowObj = {};
+                            
+                            for (let j = 0; j < columnNames.length; j++) {
+                                if (j < row.length) {
+                                    rowObj[columnNames[j]] = row[j];
+                                } else {
+                                    rowObj[columnNames[j]] = null;
+                                }
+                            }
+                            
+                            uploadedData.push(rowObj);
+                        }
+                        
+                        showDataPreview();
+                    } catch (error) {
+                        showError('Error parsing Excel file: ' + error.message);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    showError('Error reading Excel file.');
+                };
+                
+                reader.readAsArrayBuffer(file);
+            }
+            
+            function showDataPreview() {
+                if (!uploadedData || uploadedData.length === 0) {
+                    showError('No data found in the file.');
+                    return;
+                }
+                
+                // Show first 10 rows
+                const previewRows = uploadedData.slice(0, 10);
+                
+                let tableHTML = '<table><thead><tr>';
+                
+                // Create header row
+                columnNames.forEach(col => {
+                    tableHTML += `<th>${col}</th>`;
+                });
+                
+                tableHTML += '</tr></thead><tbody>';
+                
+                // Create data rows
+                previewRows.forEach(row => {
+                    tableHTML += '<tr>';
+                    columnNames.forEach(col => {
+                        tableHTML += `<td>${row[col] !== null && row[col] !== undefined ? row[col] : ''}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                });
+                
+                tableHTML += '</tbody></table>';
+                
+                previewTable.innerHTML = tableHTML;
+                dataPreview.classList.remove('hidden');
+            }
+            
+            function analyzeData() {
+                if (!uploadedData || uploadedData.length === 0) {
+                    showError('No data to analyze.');
+                    return;
+                }
+                
+                analysisSection.classList.remove('hidden');
+                loading.classList.remove('hidden');
+                chartsContainer.innerHTML = '';
+                errorMessage.classList.add('hidden');
+                
+                // Simulate processing time
+                setTimeout(() => {
+                    try {
+                        generateVisualizations();
+                        loading.classList.add('hidden');
+                    } catch (error) {
+                        loading.classList.add('hidden');
+                        showError('Error during analysis: ' + error.message);
+                    }
+                }, 1000);
+            }
+            
+            function generateVisualizations() {
+                chartsContainer.innerHTML = '';
+                
+                // 1. Identify numeric and categorical columns
+                const numericColumns = [];
+                const categoricalColumns = [];
+                
+                columnNames.forEach(col => {
+                    const sampleValue = uploadedData[0][col];
+                    
+                    if (typeof sampleValue === 'number' && !isNaN(sampleValue)) {
+                        numericColumns.push(col);
+                    } else {
+                        // Check if it's a numeric column with string values
+                        const numericValues = uploadedData
+                            .map(row => row[col])
+                            .filter(val => val !== null && val !== undefined)
+                            .map(val => parseFloat(val));
+                        
+                        const allNumeric = numericValues.every(val => !isNaN(val));
+                        
+                        if (allNumeric && numericValues.length > 0) {
+                            numericColumns.push(col);
+                        } else {
+                            categoricalColumns.push(col);
+                        }
+                    }
+                });
+                
+                // 2. Generate histograms for numeric columns
+                numericColumns.forEach(col => {
+                    const values = uploadedData
+                        .map(row => row[col])
+                        .filter(val => val !== null && val !== undefined && !isNaN(val));
+                    
+                    if (values.length === 0) return;
+                    
+                    const trace = {
+                        x: values,
+                        type: 'histogram',
+                        name: col,
+                        marker: {
+                            color: '#3498db'
+                        }
+                    };
+                    
+                    const layout = {
+                        title: `Distribution of ${col}`,
+                        xaxis: { title: col },
+                        yaxis: { title: 'Frequency' },
+                        height: 350
+                    };
+                    
+                    const chartDiv = document.createElement('div');
+                    chartDiv.className = 'chart';
+                    chartsContainer.appendChild(chartDiv);
+                    
+                    Plotly.newPlot(chartDiv, [trace], layout);
+                });
+                
+                // 3. Generate bar charts for categorical columns (top 10 categories)
+                categoricalColumns.forEach(col => {
+                    const valueCounts = {};
+                    
+                    uploadedData.forEach(row => {
+                        const value = row[col];
+                        if (value !== null && value !== undefined) {
+                            valueCounts[value] = (valueCounts[value] || 0) + 1;
+                        }
+                    });
+                    
+                    const sortedValues = Object.entries(valueCounts)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 10);
+                    
+                    if (sortedValues.length === 0) return;
+                    
+                    const categories = sortedValues.map(item => item[0]);
+                    const counts = sortedValues.map(item => item[1]);
+                    
+                    const trace = {
+                        x: categories,
+                        y: counts,
+                        type: 'bar',
+                        marker: {
+                            color: '#e74c3c'
+                        }
+                    };
+                    
+                    const layout = {
+                        title: `Top ${Math.min(10, categories.length)} ${col} Values`,
+                        xaxis: { title: col, tickangle: -45 },
+                        yaxis: { title: 'Count' },
+                        height: 350
+                    };
+                    
+                    const chartDiv = document.createElement('div');
+                    chartDiv.className = 'chart';
+                    chartsContainer.appendChild(chartDiv);
+                    
+                    Plotly.newPlot(chartDiv, [trace], layout);
+                });
+                
+                // 4. Generate scatter plots for pairs of numeric columns (if we have at least 2)
+                if (numericColumns.length >= 2) {
+                    // Create a scatter plot matrix for the first 4 numeric columns
+                    const selectedColumns = numericColumns.slice(0, Math.min(4, numericColumns.length));
+                    const traces = [];
+                    
+                    // Create scatter plots for each pair
+                    for (let i = 0; i < selectedColumns.length; i++) {
+                        for (let j = i + 1; j < selectedColumns.length; j++) {
+                            const xCol = selectedColumns[i];
+                            const yCol = selectedColumns[j];
+                            
+                            const xValues = uploadedData
+                                .map(row => row[xCol])
+                                .filter(val => val !== null && val !== undefined && !isNaN(val));
+                            
+                            const yValues = uploadedData
+                                .map(row => row[yCol])
+                                .filter(val => val !== null && val !== undefined && !isNaN(val));
+                            
+                            // Align the data (only use rows where both values exist)
+                            const alignedData = [];
+                            for (let k = 0; k < Math.min(xValues.length, yValues.length); k++) {
+                                alignedData.push({ x: xValues[k], y: yValues[k] });
+                            }
+                            
+                            if (alignedData.length > 0) {
+                                const trace = {
+                                    x: alignedData.map(d => d.x),
+                                    y: alignedData.map(d => d.y),
+                                    mode: 'markers',
+                                    type: 'scatter',
+                                    name: `${xCol} vs ${yCol}`,
+                                    marker: {
+                                        size: 8,
+                                        opacity: 0.6
+                                    }
+                                };
+                                
+                                traces.push(trace);
+                                
+                                const layout = {
+                                    title: `${xCol} vs ${yCol}`,
+                                    xaxis: { title: xCol },
+                                    yaxis: { title: yCol },
+                                    height: 350
+                                };
+                                
+                                const chartDiv = document.createElement('div');
+                                chartDiv.className = 'chart';
+                                chartsContainer.appendChild(chartDiv);
+                                
+                                Plotly.newPlot(chartDiv, [trace], layout);
+                            }
+                        }
+                    }
+                }
+                
+                // 5. Generate a simple customer segmentation based on RFM if possible
+                // Look for common customer segmentation columns
+                const possibleSegmentColumns = [
+                    'segment', 'cluster', 'category', 'type', 'group', 
+                    'loyalty', 'status', 'tier', 'class'
+                ];
+                
+                let segmentColumn = null;
+                for (const col of possibleSegmentColumns) {
+                    if (columnNames.map(c => c.toLowerCase()).includes(col.toLowerCase())) {
+                        segmentColumn = columnNames.find(c => c.toLowerCase() === col.toLowerCase());
+                        break;
+                    }
+                }
+                
+                // If we found a segmentation column, create a pie chart
+                if (segmentColumn) {
+                    const segmentCounts = {};
+                    
+                    uploadedData.forEach(row => {
+                        const segment = row[segmentColumn];
+                        if (segment !== null && segment !== undefined) {
+                            segmentCounts[segment] = (segmentCounts[segment] || 0) + 1;
+                        }
+                    });
+                    
+                    const segments = Object.keys(segmentCounts);
+                    const counts = Object.values(segmentCounts);
+                    
+                    const trace = {
+                        labels: segments,
+                        values: counts,
+                        type: 'pie',
+                        hole: 0.4,
+                        marker: {
+                            colors: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
+                        }
+                    };
+                    
+                    const layout = {
+                        title: `Customer Segments (${segmentColumn})`,
+                        height: 350
+                    };
+                    
+                    const chartDiv = document.createElement('div');
+                    chartDiv.className = 'chart';
+                    chartsContainer.appendChild(chartDiv);
+                    
+                    Plotly.newPlot(chartDiv, [trace], layout);
+                }
+                
+                // 6. If we have enough numeric columns, create a correlation heatmap
+                if (numericColumns.length >= 3) {
+                    // Calculate correlations
+                    const correlationMatrix = [];
+                    const selectedNumericColumns = numericColumns.slice(0, Math.min(8, numericColumns.length));
+                    
+                    // Initialize matrix
+                    for (let i = 0; i < selectedNumericColumns.length; i++) {
+                        correlationMatrix[i] = [];
+                        for (let j = 0; j < selectedNumericColumns.length; j++) {
+                            correlationMatrix[i][j] = 0;
+                        }
+                    }
+                    
+                    // Calculate correlations
+                    for (let i = 0; i < selectedNumericColumns.length; i++) {
+                        for (let j = i; j < selectedNumericColumns.length; j++) {
+                            const col1 = selectedNumericColumns[i];
+                            const col2 = selectedNumericColumns[j];
+                            
+                            const values1 = uploadedData
+                                .map(row => row[col1])
+                                .filter(val => val !== null && val !== undefined && !isNaN(val));
+                            
+                            const values2 = uploadedData
+                                .map(row => row[col2])
+                                .filter(val => val !== null && val !== undefined && !isNaN(val));
+                            
+                            // Align the data
+                            const alignedData = [];
+                            for (let k = 0; k < Math.min(values1.length, values2.length); k++) {
+                                alignedData.push({ x: values1[k], y: values2[k] });
+                            }
+                            
+                            if (alignedData.length > 1) {
+                                const correlation = calculateCorrelation(
+                                    alignedData.map(d => d.x),
+                                    alignedData.map(d => d.y)
+                                );
+                                
+                                correlationMatrix[i][j] = correlation;
+                                correlationMatrix[j][i] = correlation;
+                            }
+                        }
+                    }
+                    
+                    const trace = {
+                        z: correlationMatrix,
+                        x: selectedNumericColumns,
+                        y: selectedNumericColumns,
+                        type: 'heatmap',
+                        colorscale: 'RdBu',
+                        zmin: -1,
+                        zmax: 1
+                    };
+                    
+                    const layout = {
+                        title: 'Correlation Matrix',
+                        height: 400
+                    };
+                    
+                    const chartDiv = document.createElement('div');
+                    chartDiv.className = 'chart';
+                    chartsContainer.appendChild(chartDiv);
+                    
+                    Plotly.newPlot(chartDiv, [trace], layout);
+                }
+            }
+            
+            function calculateCorrelation(x, y) {
+                const n = x.length;
+                let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    sumX += x[i];
+                    sumY += y[i];
+                    sumXY += x[i] * y[i];
+                    sumX2 += x[i] * x[i];
+                    sumY2 += y[i] * y[i];
+                }
+                
+                const numerator = n * sumXY - sumX * sumY;
+                const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+                
+                return denominator === 0 ? 0 : numerator / denominator;
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+            }
         });
     </script>
 </body>
