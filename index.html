@@ -216,6 +216,7 @@
             display: flex;
             border-bottom: 1px solid #e0e0e0;
             margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
         
         .tab {
@@ -583,6 +584,45 @@
             color: #7f8c8d;
         }
         
+        /* Analytics Grid */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .analytics-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .prediction-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .prediction-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .prediction-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .prediction-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
         .hidden {
             display: none;
         }
@@ -630,12 +670,6 @@
                 <a href="#" class="nav-link" data-target="reports">
                     <span class="nav-icon">📋</span>
                     <span class="nav-text">Reports</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" data-target="settings">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-text">Settings</span>
                 </a>
             </li>
         </ul>
@@ -861,6 +895,7 @@
                 <div class="tab active" data-tab="segments-overview">Segments Overview</div>
                 <div class="tab" data-tab="segment-details">Segment Details</div>
                 <div class="tab" data-tab="segment-comparison">Segment Comparison</div>
+                <div class="tab" data-tab="customer-profiles">Customer Profiles</div>
             </div>
             
             <div class="tab-content active" id="segments-overview">
@@ -949,46 +984,929 @@
             </div>
             
             <div class="tab-content" id="segment-details">
-                <p>Detailed segment analysis will appear here after data processing.</p>
+                <div class="section-header">
+                    <h3 class="section-title">Segment Analysis</h3>
+                    <select id="segmentSelector" class="control-input" style="width: 200px;">
+                        <option value="platinum">Platinum Segment</option>
+                        <option value="gold">Gold Segment</option>
+                        <option value="silver">Silver Segment</option>
+                        <option value="bronze">Bronze Segment</option>
+                    </select>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="segment-purchase-trend"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="segment-product-mix"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="segment-geographic-dist"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="segment-demographics"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Segment Insights</h3>
+                    <div id="segment-insights">
+                        <p>Detailed insights for the selected segment will appear here after analysis.</p>
+                    </div>
+                </div>
             </div>
             
             <div class="tab-content" id="segment-comparison">
-                <p>Segment comparison charts and metrics will appear here after data processing.</p>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="comparison-rfm-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="comparison-ltv-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="comparison-retention-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="comparison-scatter-chart"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Segment Comparison Metrics</h3>
+                    <div class="data-table-container">
+                        <table class="data-table" id="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Platinum</th>
+                                    <th>Gold</th>
+                                    <th>Silver</th>
+                                    <th>Bronze</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Avg. Lifetime Value</td>
+                                    <td>$4,250</td>
+                                    <td>$1,850</td>
+                                    <td>$750</td>
+                                    <td>$210</td>
+                                </tr>
+                                <tr>
+                                    <td>Purchase Frequency</td>
+                                    <td>18.2</td>
+                                    <td>9.5</td>
+                                    <td>4.1</td>
+                                    <td>1.8</td>
+                                </tr>
+                                <tr>
+                                    <td>Avg. Order Value</td>
+                                    <td>$234</td>
+                                    <td>$195</td>
+                                    <td>$183</td>
+                                    <td>$117</td>
+                                </tr>
+                                <tr>
+                                    <td>Retention Rate</td>
+                                    <td>94%</td>
+                                    <td>82%</td>
+                                    <td>67%</td>
+                                    <td>42%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="customer-profiles">
+                <div class="section-header">
+                    <h3 class="section-title">Customer Profile Analysis</h3>
+                    <button class="btn" id="generateProfilesBtn">
+                        <i>👤</i> Generate Profiles
+                    </button>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="profile-demographics-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="profile-behavior-chart"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Customer Personas</h3>
+                    <div class="segments-grid">
+                        <div class="segment-card">
+                            <div class="segment-header">
+                                <div class="segment-name">Loyal Linda</div>
+                                <div class="segment-badge">Platinum</div>
+                            </div>
+                            <p><strong>Demographics:</strong> Female, 45-60, Urban</p>
+                            <p><strong>Behavior:</strong> Shops weekly, responds to email campaigns</p>
+                            <p><strong>Preferences:</strong> Premium products, loyalty rewards</p>
+                        </div>
+                        
+                        <div class="segment-card">
+                            <div class="segment-header">
+                                <div class="segment-name">Bargain Bob</div>
+                                <div class="segment-badge">Bronze</div>
+                            </div>
+                            <p><strong>Demographics:</strong> Male, 25-40, Suburban</p>
+                            <p><strong>Behavior:</strong> Shops during sales, price-sensitive</p>
+                            <p><strong>Preferences:</strong> Discounts, value bundles</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- Other sections would continue similarly -->
-        
         <!-- Analytics Section -->
         <section id="analytics" class="content-section hidden">
             <div class="section-header">
                 <h2 class="section-title">Advanced Analytics</h2>
+                <button class="btn" id="runAdvancedAnalyticsBtn">
+                    <i>🔬</i> Run Analysis
+                </button>
             </div>
-            <p>Advanced clustering algorithms, trend analysis, and predictive modeling would be implemented here.</p>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="clustering">Clustering Analysis</div>
+                <div class="tab" data-tab="trends">Trend Analysis</div>
+                <div class="tab" data-tab="cohort">Cohort Analysis</div>
+                <div class="tab" data-tab="correlation">Correlation Analysis</div>
+            </div>
+            
+            <div class="tab-content active" id="clustering">
+                <div class="advanced-controls">
+                    <h3>Clustering Parameters</h3>
+                    <div class="control-group">
+                        <label class="control-label">Number of Clusters</label>
+                        <div class="slider-container">
+                            <input type="range" min="2" max="8" value="4" class="slider" id="clusterSlider">
+                            <span class="slider-value" id="clusterValue">4</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Clustering Algorithm</label>
+                        <select class="control-input" id="clusterAlgorithm">
+                            <option value="kmeans">K-Means</option>
+                            <option value="dbscan">DBSCAN</option>
+                            <option value="hierarchical">Hierarchical</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-success" id="runClusteringBtn">
+                        <i>🔍</i> Run Clustering
+                    </button>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="cluster-scatter-plot"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="cluster-silhouette-plot"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Cluster Characteristics</h3>
+                    <div class="data-table-container">
+                        <table class="data-table" id="cluster-table">
+                            <thead>
+                                <tr>
+                                    <th>Cluster</th>
+                                    <th>Size</th>
+                                    <th>Avg. Recency</th>
+                                    <th>Avg. Frequency</th>
+                                    <th>Avg. Monetary</th>
+                                    <th>Segment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Cluster 1</td>
+                                    <td>312</td>
+                                    <td>15 days</td>
+                                    <td>18.5</td>
+                                    <td>$1,240</td>
+                                    <td>Platinum</td>
+                                </tr>
+                                <tr>
+                                    <td>Cluster 2</td>
+                                    <td>598</td>
+                                    <td>28 days</td>
+                                    <td>9.2</td>
+                                    <td>$580</td>
+                                    <td>Gold</td>
+                                </tr>
+                                <tr>
+                                    <td>Cluster 3</td>
+                                    <td>912</td>
+                                    <td>45 days</td>
+                                    <td>4.1</td>
+                                    <td>$210</td>
+                                    <td>Silver</td>
+                                </tr>
+                                <tr>
+                                    <td>Cluster 4</td>
+                                    <td>782</td>
+                                    <td>78 days</td>
+                                    <td>1.8</td>
+                                    <td>$85</td>
+                                    <td>Bronze</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="trends">
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="revenue-trend-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="customer-trend-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="seasonality-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="product-trend-chart"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Trend Insights</h3>
+                    <div id="trend-insights">
+                        <p><strong>Key Findings:</strong></p>
+                        <ul>
+                            <li>Revenue has grown 15% year-over-year, with Platinum customers contributing 42% of total revenue</li>
+                            <li>Customer acquisition costs have decreased by 8% while retention has improved by 12%</li>
+                            <li>Seasonal peaks occur in Q4 (holiday season) and Q2 (spring promotions)</li>
+                            <li>Product category "Electronics" shows the strongest growth at 24% year-over-year</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="cohort">
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="cohort-retention-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="cohort-revenue-chart"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Cohort Analysis Results</h3>
+                    <div class="data-table-container">
+                        <table class="data-table" id="cohort-table">
+                            <thead>
+                                <tr>
+                                    <th>Cohort</th>
+                                    <th>Customers</th>
+                                    <th>Month 1</th>
+                                    <th>Month 3</th>
+                                    <th>Month 6</th>
+                                    <th>Month 12</th>
+                                    <th>LTV</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Jan 2023</td>
+                                    <td>245</td>
+                                    <td>100%</td>
+                                    <td>78%</td>
+                                    <td>65%</td>
+                                    <td>52%</td>
+                                    <td>$1,240</td>
+                                </tr>
+                                <tr>
+                                    <td>Feb 2023</td>
+                                    <td>312</td>
+                                    <td>100%</td>
+                                    <td>82%</td>
+                                    <td>68%</td>
+                                    <td>55%</td>
+                                    <td>$1,310</td>
+                                </tr>
+                                <tr>
+                                    <td>Mar 2023</td>
+                                    <td>278</td>
+                                    <td>100%</td>
+                                    <td>85%</td>
+                                    <td>72%</td>
+                                    <td>58%</td>
+                                    <td>$1,420</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="correlation">
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="correlation-matrix"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="correlation-heatmap"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Correlation Insights</h3>
+                    <div id="correlation-insights">
+                        <p><strong>Key Correlations:</strong></p>
+                        <ul>
+                            <li><strong>Strong positive correlation (0.82)</strong> between purchase frequency and customer lifetime value</li>
+                            <li><strong>Moderate negative correlation (-0.65)</strong> between recency and likelihood of repeat purchase</li>
+                            <li><strong>Weak positive correlation (0.32)</strong> between customer age and average order value</li>
+                            <li>Product categories "Electronics" and "Accessories" show strong cross-purchase patterns (0.76)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </section>
-        
+
         <!-- Predictions Section -->
         <section id="predictions" class="content-section hidden">
             <div class="section-header">
                 <h2 class="section-title">Customer Predictions</h2>
+                <button class="btn" id="runPredictionsBtn">
+                    <i>🔮</i> Generate Predictions
+                </button>
             </div>
-            <p>Churn prediction, lifetime value forecasting, and next purchase prediction would be implemented here.</p>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="churn">Churn Prediction</div>
+                <div class="tab" data-tab="ltv">Lifetime Value</div>
+                <div class="tab" data-tab="next-purchase">Next Purchase</div>
+                <div class="tab" data-tab="propensity">Propensity Models</div>
+            </div>
+            
+            <div class="tab-content active" id="churn">
+                <div class="prediction-results">
+                    <div class="prediction-card">
+                        <div class="prediction-label">Overall Churn Rate</div>
+                        <div class="prediction-value">12.4%</div>
+                        <div class="metric-change change-negative">
+                            <span>+1.2%</span> from last quarter
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <div class="prediction-label">At-Risk Customers</div>
+                        <div class="prediction-value">847</div>
+                        <div class="metric-change change-negative">
+                            <span>+8%</span> from last month
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <div class="prediction-label">Churn Prevention Success</div>
+                        <div class="prediction-value">34%</div>
+                        <div class="metric-change change-positive">
+                            <span>+5%</span> from last quarter
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="churn-segment-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="churn-reasons-chart"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Churn Risk by Segment</h3>
+                    <div class="data-table-container">
+                        <table class="data-table" id="churn-table">
+                            <thead>
+                                <tr>
+                                    <th>Segment</th>
+                                    <th>Customers</th>
+                                    <th>At Risk</th>
+                                    <th>Churn Rate</th>
+                                    <th>Avg. Risk Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Platinum</td>
+                                    <td>312</td>
+                                    <td>18</td>
+                                    <td>5.8%</td>
+                                    <td>0.24</td>
+                                </tr>
+                                <tr>
+                                    <td>Gold</td>
+                                    <td>598</td>
+                                    <td>74</td>
+                                    <td>12.4%</td>
+                                    <td>0.41</td>
+                                </tr>
+                                <tr>
+                                    <td>Silver</td>
+                                    <td>912</td>
+                                    <td>215</td>
+                                    <td>23.6%</td>
+                                    <td>0.63</td>
+                                </tr>
+                                <tr>
+                                    <td>Bronze</td>
+                                    <td>782</td>
+                                    <td>540</td>
+                                    <td>69.1%</td>
+                                    <td>0.82</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="ltv">
+                <div class="prediction-results">
+                    <div class="prediction-card">
+                        <div class="prediction-label">Avg. Customer Lifetime Value</div>
+                        <div class="prediction-value">$1,245</div>
+                        <div class="metric-change change-positive">
+                            <span>+8.2%</span> from last year
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <div class="prediction-label">High-Value Customers (LTV > $2,500)</div>
+                        <div class="prediction-value">428</div>
+                        <div class="metric-change change-positive">
+                            <span>+12%</span> from last quarter
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <div class="prediction-label">LTV Prediction Accuracy</div>
+                        <div class="prediction-value">87.3%</div>
+                        <div class="metric-change change-positive">
+                            <span>+2.1%</span> model improvement
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="ltv-distribution-chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="ltv-prediction-chart"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>LTV by Acquisition Channel</h3>
+                    <div class="data-table-container">
+                        <table class="data-table" id="ltv-table">
+                            <thead>
+                                <tr>
+                                    <th>Acquisition Channel</th>
+                                    <th>Customers</th>
+                                    <th>Avg. LTV</th>
+                                    <th>LTV/CAC Ratio</th>
+                                    <th>Payback Period</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Organic Search</td>
+                                    <td>1,245</td>
+                                    <td>$1,850</td>
+                                    <td>4.2</td>
+                                    <td>5.2 months</td>
+                                </tr>
+                                <tr>
+                                    <td>Referral</td>
+                                    <td>892</td>
+                                    <td>$1,620</td>
+                                    <td>3.8</td>
+                                    <td>6.1 months</td>
+                                </tr>
+                                <tr>
+                                    <td>Social Media</td>
+                                    <td>745</td>
+                                    <td>$1,210</td>
+                                    <td>2.9</td>
+                                    <td>7.8 months</td>
+                                </tr>
+                                <tr>
+                                    <td>Paid Search</td>
+                                    <td>1,102</td>
+                                    <td>$980</td>
+                                    <td>2.1</td>
+                                    <td>9.4 months</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="next-purchase">
+                <div class="prediction-results">
+                    <div class="prediction-card">
+                        <div class="prediction-label">Next Purchase Accuracy</div>
+                        <div class="prediction-value">76.8%</div>
+                        <div class="metric-change change-positive">
+                            <span>+3.2%</span> model improvement
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <div class="prediction-label">Avg. Days to Next Purchase</div>
+                        <div class="prediction-value">34</div>
+                        <div class="metric-change change-negative">
+                            <span>+2 days</span> from last quarter
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <div class="prediction-label">Recommended Product Match</div>
+                        <div class="prediction-value">68%</div>
+                        <div class="metric-change change-positive">
+                            <span>+7%</span> from last model
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="next-purchase-timing"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="product-affinity"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Next Purchase Recommendations</h3>
+                    <div class="data-table-container">
+                        <table class="data-table" id="next-purchase-table">
+                            <thead>
+                                <tr>
+                                    <th>Customer Segment</th>
+                                    <th>Avg. Days to Purchase</th>
+                                    <th>Recommended Product Category</th>
+                                    <th>Confidence Score</th>
+                                    <th>Expected Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Platinum</td>
+                                    <td>18</td>
+                                    <td>Premium Electronics</td>
+                                    <td>84%</td>
+                                    <td>$285</td>
+                                </tr>
+                                <tr>
+                                    <td>Gold</td>
+                                    <td>32</td>
+                                    <td>Home Appliances</td>
+                                    <td>76%</td>
+                                    <td>$165</td>
+                                </tr>
+                                <tr>
+                                    <td>Silver</td>
+                                    <td>47</td>
+                                    <td>Accessories</td>
+                                    <td>68%</td>
+                                    <td>$85</td>
+                                </tr>
+                                <tr>
+                                    <td>Bronze</td>
+                                    <td>72</td>
+                                    <td>Consumables</td>
+                                    <td>52%</td>
+                                    <td>$45</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="propensity">
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="propensity-scores"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="propensity-lift"></div>
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h3>Propensity Model Performance</h3>
+                    <div class="data-table-container">
+                        <table class="data-table" id="propensity-table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Accuracy</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1 Score</th>
+                                    <th>AUC</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Churn Prediction</td>
+                                    <td>87.2%</td>
+                                    <td>83.5%</td>
+                                    <td>76.8%</td>
+                                    <td>80.0%</td>
+                                    <td>0.89</td>
+                                </tr>
+                                <tr>
+                                    <td>Upsell Propensity</td>
+                                    <td>79.4%</td>
+                                    <td>75.2%</td>
+                                    <td>71.8%</td>
+                                    <td>73.4%</td>
+                                    <td>0.82</td>
+                                </tr>
+                                <tr>
+                                    <td>Cross-sell Propensity</td>
+                                    <td>72.6%</td>
+                                    <td>68.9%</td>
+                                    <td>65.4%</td>
+                                    <td>67.1%</td>
+                                    <td>0.76</td>
+                                </tr>
+                                <tr>
+                                    <td>Promotion Response</td>
+                                    <td>81.3%</td>
+                                    <td>78.5%</td>
+                                    <td>74.2%</td>
+                                    <td>76.3%</td>
+                                    <td>0.85</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </section>
-        
+
         <!-- Reports Section -->
         <section id="reports" class="content-section hidden">
             <div class="section-header">
                 <h2 class="section-title">Reports & Exports</h2>
+                <button class="btn btn-success" id="generateReportBtn">
+                    <i>📄</i> Generate Full Report
+                </button>
             </div>
-            <p>Custom report generation and data export functionality would be implemented here.</p>
-        </section>
-        
-        <!-- Settings Section -->
-        <section id="settings" class="content-section hidden">
-            <div class="section-header">
-                <h2 class="section-title">Settings</h2>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="standard">Standard Reports</div>
+                <div class="tab" data-tab="custom">Custom Reports</div>
+                <div class="tab" data-tab="exports">Data Exports</div>
             </div>
-            <p>Application configuration and user preferences would be managed here.</p>
+            
+            <div class="tab-content active" id="standard">
+                <div class="segments-grid">
+                    <div class="segment-card">
+                        <div class="segment-header">
+                            <div class="segment-name">Customer Segmentation Report</div>
+                        </div>
+                        <p>Complete analysis of customer segments with RFM metrics</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">24</div>
+                                <div class="stat-label">Pages</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">12</div>
+                                <div class="stat-label">Charts</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="width: 100%; margin-top: 1rem;">
+                            <i>📥</i> Download PDF
+                        </button>
+                    </div>
+                    
+                    <div class="segment-card">
+                        <div class="segment-header">
+                            <div class="segment-name">Performance Dashboard</div>
+                        </div>
+                        <p>Key metrics and performance indicators for management</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">16</div>
+                                <div class="stat-label">Pages</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">8</div>
+                                <div class="stat-label">Charts</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="width: 100%; margin-top: 1rem;">
+                            <i>📥</i> Download PDF
+                        </button>
+                    </div>
+                    
+                    <div class="segment-card">
+                        <div class="segment-header">
+                            <div class="segment-name">Monthly Analytics</div>
+                        </div>
+                        <p>Monthly performance review with trend analysis</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">18</div>
+                                <div class="stat-label">Pages</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">10</div>
+                                <div class="stat-label">Charts</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="width: 100%; margin-top: 1rem;">
+                            <i>📥</i> Download PDF
+                        </button>
+                    </div>
+                    
+                    <div class="segment-card">
+                        <div class="segment-header">
+                            <div class="segment-name">Executive Summary</div>
+                        </div>
+                        <p>High-level insights and recommendations for executives</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">8</div>
+                                <div class="stat-label">Pages</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">6</div>
+                                <div class="stat-label">Charts</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="width: 100%; margin-top: 1rem;">
+                            <i>📥</i> Download PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="custom">
+                <div class="advanced-controls">
+                    <h3>Custom Report Builder</h3>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Report Type</label>
+                        <select class="control-input" id="reportType">
+                            <option value="segmentation">Customer Segmentation</option>
+                            <option value="performance">Performance Analysis</option>
+                            <option value="predictive">Predictive Analytics</option>
+                            <option value="comparative">Comparative Analysis</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Time Period</label>
+                        <select class="control-input" id="timePeriod">
+                            <option value="last30">Last 30 Days</option>
+                            <option value="last90">Last 90 Days</option>
+                            <option value="lastYear">Last Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Segments to Include</label>
+                        <div>
+                            <label><input type="checkbox" checked> Platinum</label>
+                            <label><input type="checkbox" checked> Gold</label>
+                            <label><input type="checkbox" checked> Silver</label>
+                            <label><input type="checkbox" checked> Bronze</label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Metrics to Include</label>
+                        <div>
+                            <label><input type="checkbox" checked> RFM Analysis</label>
+                            <label><input type="checkbox" checked> Customer Lifetime Value</label>
+                            <label><input type="checkbox" checked> Churn Analysis</label>
+                            <label><input type="checkbox" checked> Purchase Patterns</label>
+                            <label><input type="checkbox" checked> Geographic Distribution</label>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success" id="buildReportBtn">
+                        <i>🛠️</i> Build Custom Report
+                    </button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="exports">
+                <div class="segments-grid">
+                    <div class="segment-card">
+                        <div class="segment-header">
+                            <div class="segment-name">Customer Segments</div>
+                        </div>
+                        <p>Complete customer segmentation data with RFM scores</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">CSV</div>
+                                <div class="stat-label">Format</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">2,604</div>
+                                <div class="stat-label">Rows</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="width: 100%; margin-top: 1rem;">
+                            <i>📥</i> Export Data
+                        </button>
+                    </div>
+                    
+                    <div class="segment-card">
+                        <div class="segment-header">
+                            <div class="segment-name">Transaction History</div>
+                        </div>
+                        <p>Complete transaction history with product details</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">CSV</div>
+                                <div class="stat-label">Format</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">45,812</div>
+                                <div class="stat-label">Rows</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="width: 100%; margin-top: 1rem;">
+                            <i>📥</i> Export Data
+                        </button>
+                    </div>
+                    
+                    <div class="segment-card">
+                        <div class="segment-header">
+                            <div class="segment-name">Customer Profiles</div>
+                        </div>
+                        <p>Detailed customer profiles with demographic data</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">JSON</div>
+                                <div class="stat-label">Format</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">12,458</div>
+                                <div class="stat-label">Rows</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="width: 100%; margin-top: 1rem;">
+                            <i>📥</i> Export Data
+                        </button>
+                    </div>
+                    
+                    <div class="segment-card">
+                        <div class="segment-header">
+                            <div class="segment-name">Analytics Dataset</div>
+                        </div>
+                        <p>Processed dataset ready for advanced analytics</p>
+                        <div class="segment-stats">
+                            <div class="segment-stat">
+                                <div class="stat-value">XLSX</div>
+                                <div class="stat-label">Format</div>
+                            </div>
+                            <div class="segment-stat">
+                                <div class="stat-value">8.7 MB</div>
+                                <div class="stat-label">Size</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="width: 100%; margin-top: 1rem;">
+                            <i>📥</i> Export Data
+                        </button>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -997,12 +1915,15 @@
         let currentData = null;
         let processedData = null;
         let segmentationResults = null;
+        let analyticsResults = null;
+        let predictionResults = null;
         
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             initializeNavigation();
             initializeEventListeners();
             initializeSampleCharts();
+            initializeSampleData();
         });
         
         function initializeNavigation() {
@@ -1046,8 +1967,32 @@
                     
                     // Show target tab content
                     document.getElementById(tabId).classList.add('active');
+                    
+                    // Initialize tab-specific content if needed
+                    if (tabId === 'segment-details') {
+                        updateSegmentDetails();
+                    } else if (tabId === 'segment-comparison') {
+                        updateSegmentComparison();
+                    } else if (tabId === 'clustering') {
+                        updateClusteringAnalysis();
+                    } else if (tabId === 'trends') {
+                        updateTrendAnalysis();
+                    } else if (tabId === 'cohort') {
+                        updateCohortAnalysis();
+                    } else if (tabId === 'correlation') {
+                        updateCorrelationAnalysis();
+                    } else if (tabId === 'churn') {
+                        updateChurnPredictions();
+                    } else if (tabId === 'ltv') {
+                        updateLTVPredictions();
+                    } else if (tabId === 'next-purchase') {
+                        updateNextPurchasePredictions();
+                    }
                 });
             });
+            
+            // Segment selector
+            document.getElementById('segmentSelector').addEventListener('change', updateSegmentDetails);
         }
         
         function initializeEventListeners() {
@@ -1094,146 +2039,21 @@
             // Segmentation buttons
             document.getElementById('runSegmentationBtn').addEventListener('click', runSegmentation);
             document.getElementById('exportSegmentsBtn').addEventListener('click', exportSegments);
-        }
-        
-        function handleFileSelect() {
-            if (!fileInput.files.length) return;
+            document.getElementById('generateProfilesBtn').addEventListener('click', generateCustomerProfiles);
             
-            const file = fileInput.files[0];
-            document.getElementById('fileName').textContent = `File: ${file.name} (${formatFileSize(file.size)})`;
-            document.getElementById('fileInfo').classList.remove('hidden');
-            document.getElementById('dataPreview').classList.add('hidden');
-            
-            // In a real application, you would parse the file here
-            // For this demo, we'll simulate file processing
-        }
-        
-        function processData() {
-            document.getElementById('processingProgress').classList.remove('hidden');
-            simulateProgress();
-            
-            // In a real application, you would process the data here
-            // For this demo, we'll use sample data after a delay
-            setTimeout(() => {
-                document.getElementById('processingProgress').classList.add('hidden');
-                document.getElementById('dataPreview').classList.remove('hidden');
-                showDataPreview(generateSampleData());
-            }, 2000);
-        }
-        
-        function analyzeData() {
-            // Show loading state
-            const analyzeBtn = document.getElementById('analyzeDataBtn');
-            const originalText = analyzeBtn.innerHTML;
-            analyzeBtn.innerHTML = '<span class="loading"></span> Analyzing...';
-            analyzeBtn.disabled = true;
-            
-            // In a real application, you would perform data analysis here
-            // For this demo, we'll simulate analysis
-            setTimeout(() => {
-                analyzeBtn.innerHTML = originalText;
-                analyzeBtn.disabled = false;
-                
-                // Navigate to segmentation section
-                document.querySelector('.nav-link[data-target="segmentation"]').click();
-                
-                // Run segmentation
-                runSegmentation();
-            }, 1500);
-        }
-        
-        function runSegmentation() {
-            // Show loading state
-            const segBtn = document.getElementById('runSegmentationBtn');
-            const originalText = segBtn.innerHTML;
-            segBtn.innerHTML = '<span class="loading"></span> Segmenting...';
-            segBtn.disabled = true;
-            
-            // In a real application, you would run segmentation algorithms here
-            // For this demo, we'll use sample segmentation results
-            setTimeout(() => {
-                segBtn.innerHTML = originalText;
-                segBtn.disabled = false;
-                
-                // Update segmentation charts
-                updateSegmentationCharts();
-            }, 2000);
-        }
-        
-        function exportSegments() {
-            // In a real application, you would export segmentation results
-            alert('Segmentation data exported successfully!');
-        }
-        
-        function simulateProgress() {
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            let width = 0;
-            
-            const interval = setInterval(() => {
-                if (width >= 100) {
-                    clearInterval(interval);
-                    progressText.textContent = 'Processing complete!';
-                } else {
-                    width += 5;
-                    progressBar.style.width = width + '%';
-                    progressText.textContent = `Processing... ${width}%`;
-                }
-            }, 100);
-        }
-        
-        function showDataPreview(data) {
-            // Create a simple table preview (first 10 rows)
-            const previewTable = document.getElementById('previewTable');
-            const headers = Object.keys(data[0]);
-            
-            let tableHTML = '<table class="data-table"><thead><tr>';
-            
-            // Create header row
-            headers.forEach(header => {
-                tableHTML += `<th>${header}</th>`;
+            // Analytics buttons
+            document.getElementById('runAdvancedAnalyticsBtn').addEventListener('click', runAdvancedAnalytics);
+            document.getElementById('runClusteringBtn').addEventListener('click', runClustering);
+            document.getElementById('clusterSlider').addEventListener('input', function() {
+                document.getElementById('clusterValue').textContent = this.value;
             });
             
-            tableHTML += '</tr></thead><tbody>';
+            // Predictions buttons
+            document.getElementById('runPredictionsBtn').addEventListener('click', runPredictions);
             
-            // Create data rows (first 10)
-            data.slice(0, 10).forEach(row => {
-                tableHTML += '<tr>';
-                headers.forEach(header => {
-                    tableHTML += `<td>${row[header]}</td>`;
-                });
-                tableHTML += '</tr>';
-            });
-            
-            tableHTML += '</tbody></table>';
-            previewTable.innerHTML = tableHTML;
-        }
-        
-        function generateSampleData() {
-            // Generate sample customer data for demonstration
-            const sampleData = [];
-            const segments = ['Platinum', 'Gold', 'Silver', 'Bronze'];
-            const products = ['Laptop', 'Smartphone', 'Tablet', 'Headphones', 'Monitor'];
-            
-            for (let i = 1; i <= 100; i++) {
-                const segment = segments[Math.floor(Math.random() * segments.length)];
-                const product = products[Math.floor(Math.random() * products.length)];
-                const revenue = Math.floor(Math.random() * 1000) + 50;
-                const orders = Math.floor(Math.random() * 20) + 1;
-                
-                sampleData.push({
-                    CustomerID: `CUST${i.toString().padStart(5, '0')}`,
-                    Name: `Customer ${i}`,
-                    Segment: segment,
-                    LastPurchase: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    TotalRevenue: revenue,
-                    TotalOrders: orders,
-                    FavoriteProduct: product,
-                    Region: ['North', 'South', 'East', 'West'][Math.floor(Math.random() * 4)]
-                });
-            }
-            
-            return sampleData;
+            // Reports buttons
+            document.getElementById('generateReportBtn').addEventListener('click', generateFullReport);
+            document.getElementById('buildReportBtn').addEventListener('click', buildCustomReport);
         }
         
         function initializeSampleCharts() {
@@ -1297,6 +2117,197 @@
             });
         }
         
+        function initializeSampleData() {
+            // Generate sample data for demonstration
+            currentData = generateSampleData();
+            processedData = processSampleData(currentData);
+            segmentationResults = performSegmentation(processedData);
+            analyticsResults = performAdvancedAnalytics(processedData, segmentationResults);
+            predictionResults = generatePredictions(processedData, segmentationResults);
+        }
+        
+        function generateSampleData() {
+            // Generate sample customer data for demonstration
+            const sampleData = [];
+            const segments = ['Platinum', 'Gold', 'Silver', 'Bronze'];
+            const products = ['Laptop', 'Smartphone', 'Tablet', 'Headphones', 'Monitor'];
+            const regions = ['North', 'South', 'East', 'West'];
+            
+            for (let i = 1; i <= 1000; i++) {
+                const segment = segments[Math.floor(Math.random() * segments.length)];
+                const product = products[Math.floor(Math.random() * products.length)];
+                const revenue = Math.floor(Math.random() * 1000) + 50;
+                const orders = Math.floor(Math.random() * 20) + 1;
+                const region = regions[Math.floor(Math.random() * regions.length)];
+                
+                sampleData.push({
+                    CustomerID: `CUST${i.toString().padStart(5, '0')}`,
+                    Name: `Customer ${i}`,
+                    Segment: segment,
+                    LastPurchase: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    TotalRevenue: revenue,
+                    TotalOrders: orders,
+                    FavoriteProduct: product,
+                    Region: region,
+                    Age: Math.floor(Math.random() * 50) + 20,
+                    Gender: Math.random() > 0.5 ? 'Male' : 'Female'
+                });
+            }
+            
+            return sampleData;
+        }
+        
+        function processSampleData(data) {
+            // Add calculated fields for analysis
+            return data.map(customer => {
+                const segmentWeights = {
+                    'Platinum': 4,
+                    'Gold': 3,
+                    'Silver': 2,
+                    'Bronze': 1
+                };
+                
+                return {
+                    ...customer,
+                    CustomerValue: customer.TotalRevenue * segmentWeights[customer.Segment],
+                    AvgOrderValue: customer.TotalRevenue / customer.TotalOrders,
+                    DaysSincePurchase: Math.floor(Math.random() * 90) + 1
+                };
+            });
+        }
+        
+        function performSegmentation(data) {
+            // Perform segmentation analysis
+            const segments = {};
+            
+            data.forEach(customer => {
+                if (!segments[customer.Segment]) {
+                    segments[customer.Segment] = [];
+                }
+                segments[customer.Segment].push(customer);
+            });
+            
+            return {
+                segments: segments,
+                summary: {
+                    totalCustomers: data.length,
+                    segmentDistribution: {
+                        'Platinum': segments['Platinum'] ? segments['Platinum'].length : 0,
+                        'Gold': segments['Gold'] ? segments['Gold'].length : 0,
+                        'Silver': segments['Silver'] ? segments['Silver'].length : 0,
+                        'Bronze': segments['Bronze'] ? segments['Bronze'].length : 0
+                    },
+                    segmentMetrics: calculateSegmentMetrics(segments)
+                }
+            };
+        }
+        
+        function calculateSegmentMetrics(segments) {
+            const metrics = {};
+            
+            Object.keys(segments).forEach(segment => {
+                const segmentData = segments[segment];
+                metrics[segment] = {
+                    count: segmentData.length,
+                    avgRevenue: segmentData.reduce((sum, customer) => sum + customer.TotalRevenue, 0) / segmentData.length,
+                    avgOrders: segmentData.reduce((sum, customer) => sum + customer.TotalOrders, 0) / segmentData.length,
+                    avgOrderValue: segmentData.reduce((sum, customer) => sum + customer.TotalRevenue, 0) / 
+                                  segmentData.reduce((sum, customer) => sum + customer.TotalOrders, 0),
+                    avgDaysSincePurchase: segmentData.reduce((sum, customer) => sum + customer.DaysSincePurchase, 0) / segmentData.length
+                };
+            });
+            
+            return metrics;
+        }
+        
+        function performAdvancedAnalytics(data, segmentation) {
+            // Perform advanced analytics
+            return {
+                clustering: performClustering(data),
+                trends: analyzeTrends(data),
+                cohorts: performCohortAnalysis(data),
+                correlations: calculateCorrelations(data)
+            };
+        }
+        
+        function generatePredictions(data, segmentation) {
+            // Generate predictive models
+            return {
+                churn: predictChurn(data),
+                ltv: predictLTV(data),
+                nextPurchase: predictNextPurchase(data),
+                propensity: calculatePropensityScores(data)
+            };
+        }
+        
+        // Placeholder functions for analytics and predictions
+        function performClustering(data) { return {}; }
+        function analyzeTrends(data) { return {}; }
+        function performCohortAnalysis(data) { return {}; }
+        function calculateCorrelations(data) { return {}; }
+        function predictChurn(data) { return {}; }
+        function predictLTV(data) { return {}; }
+        function predictNextPurchase(data) { return {}; }
+        function calculatePropensityScores(data) { return {}; }
+        
+        function handleFileSelect() {
+            if (!fileInput.files.length) return;
+            
+            const file = fileInput.files[0];
+            document.getElementById('fileName').textContent = `File: ${file.name} (${formatFileSize(file.size)})`;
+            document.getElementById('fileInfo').classList.remove('hidden');
+            document.getElementById('dataPreview').classList.add('hidden');
+        }
+        
+        function processData() {
+            document.getElementById('processingProgress').classList.remove('hidden');
+            simulateProgress();
+            
+            // In a real application, you would process the data here
+            setTimeout(() => {
+                document.getElementById('processingProgress').classList.add('hidden');
+                document.getElementById('dataPreview').classList.remove('hidden');
+                showDataPreview(currentData);
+            }, 2000);
+        }
+        
+        function analyzeData() {
+            // Show loading state
+            const analyzeBtn = document.getElementById('analyzeDataBtn');
+            const originalText = analyzeBtn.innerHTML;
+            analyzeBtn.innerHTML = '<span class="loading"></span> Analyzing...';
+            analyzeBtn.disabled = true;
+            
+            // In a real application, you would perform data analysis here
+            setTimeout(() => {
+                analyzeBtn.innerHTML = originalText;
+                analyzeBtn.disabled = false;
+                
+                // Navigate to segmentation section
+                document.querySelector('.nav-link[data-target="segmentation"]').click();
+                
+                // Run segmentation
+                runSegmentation();
+            }, 1500);
+        }
+        
+        function runSegmentation() {
+            // Show loading state
+            const segBtn = document.getElementById('runSegmentationBtn');
+            const originalText = segBtn.innerHTML;
+            segBtn.innerHTML = '<span class="loading"></span> Segmenting...';
+            segBtn.disabled = true;
+            
+            // In a real application, you would run segmentation algorithms here
+            setTimeout(() => {
+                segBtn.innerHTML = originalText;
+                segBtn.disabled = false;
+                
+                // Update segmentation charts
+                updateSegmentationCharts();
+            }, 2000);
+        }
+        
         function updateSegmentationCharts() {
             // Update segmentation pie chart
             Plotly.newPlot('segmentation-pie-chart', [{
@@ -1329,6 +2340,341 @@
                 barmode: 'group',
                 height: 350
             });
+        }
+        
+        function updateSegmentDetails() {
+            const segment = document.getElementById('segmentSelector').value;
+            
+            // Update segment purchase trend
+            Plotly.newPlot('segment-purchase-trend', [{
+                x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                y: [45, 52, 48, 61, 55, 68],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Monthly Revenue',
+                line: { color: '#3498db' }
+            }], {
+                title: `${segment.charAt(0).toUpperCase() + segment.slice(1)} Segment - Purchase Trend`,
+                height: 350
+            });
+            
+            // Update segment product mix
+            Plotly.newPlot('segment-product-mix', [{
+                values: [35, 25, 20, 15, 5],
+                labels: ['Electronics', 'Clothing', 'Home Goods', 'Accessories', 'Other'],
+                type: 'pie',
+                marker: {
+                    colors: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6']
+                }
+            }], {
+                title: `${segment.charAt(0).toUpperCase() + segment.slice(1)} Segment - Product Mix`,
+                height: 350
+            });
+            
+            // Update segment insights
+            const insights = {
+                platinum: "Platinum customers are your most valuable segment, contributing 42% of total revenue despite representing only 12% of customers. They have high purchase frequency (18.2 orders/year) and are highly responsive to loyalty programs.",
+                gold: "Gold customers represent a significant growth opportunity. They have good purchase frequency (9.5 orders/year) and respond well to cross-selling campaigns. Focus on increasing their average order value.",
+                silver: "Silver customers are occasional shoppers with moderate spending. They respond well to seasonal promotions and email campaigns. Consider implementing a win-back strategy for those showing decreased engagement.",
+                bronze: "Bronze customers are primarily one-time or infrequent shoppers. They are highly price-sensitive and respond well to discounts. Focus on converting them to more engaged segments through targeted onboarding."
+            };
+            
+            document.getElementById('segment-insights').innerHTML = `
+                <p><strong>Segment Overview:</strong> ${insights[segment]}</p>
+                <p><strong>Recommendations:</strong></p>
+                <ul>
+                    <li>Implement targeted marketing campaigns for this segment</li>
+                    <li>Develop segment-specific product recommendations</li>
+                    <li>Create personalized communication strategies</li>
+                    <li>Monitor engagement metrics for early intervention</li>
+                </ul>
+            `;
+        }
+        
+        function updateSegmentComparison() {
+            // Update comparison RFM chart
+            Plotly.newPlot('comparison-rfm-chart', [{
+                x: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                y: [4.2, 3.1, 2.4, 1.8],
+                type: 'bar',
+                name: 'Recency Score',
+                marker: { color: '#3498db' }
+            }, {
+                x: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                y: [4.8, 3.5, 2.2, 1.5],
+                type: 'bar',
+                name: 'Frequency Score',
+                marker: { color: '#2ecc71' }
+            }, {
+                x: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                y: [4.9, 3.7, 2.5, 1.3],
+                type: 'bar',
+                name: 'Monetary Score',
+                marker: { color: '#e74c3c' }
+            }], {
+                title: 'RFM Score Comparison by Segment',
+                barmode: 'group',
+                height: 350
+            });
+            
+            // Update comparison LTV chart
+            Plotly.newPlot('comparison-ltv-chart', [{
+                x: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                y: [4250, 1850, 750, 210],
+                type: 'bar',
+                name: 'Avg. Lifetime Value',
+                marker: { color: '#9b59b6' }
+            }], {
+                title: 'Average Customer Lifetime Value by Segment',
+                height: 350
+            });
+        }
+        
+        function generateCustomerProfiles() {
+            // Show loading state
+            const profileBtn = document.getElementById('generateProfilesBtn');
+            const originalText = profileBtn.innerHTML;
+            profileBtn.innerHTML = '<span class="loading"></span> Generating...';
+            profileBtn.disabled = true;
+            
+            setTimeout(() => {
+                profileBtn.innerHTML = originalText;
+                profileBtn.disabled = false;
+                
+                // Update profile charts
+                Plotly.newPlot('profile-demographics-chart', [{
+                    x: ['18-24', '25-34', '35-44', '45-54', '55+'],
+                    y: [15, 35, 28, 16, 6],
+                    type: 'bar',
+                    name: 'Age Distribution',
+                    marker: { color: '#3498db' }
+                }], {
+                    title: 'Customer Age Distribution',
+                    height: 350
+                });
+                
+                Plotly.newPlot('profile-behavior-chart', [{
+                    values: [42, 28, 18, 12],
+                    labels: ['Mobile App', 'Website', 'In-Store', 'Phone'],
+                    type: 'pie',
+                    marker: {
+                        colors: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12']
+                    }
+                }], {
+                    title: 'Preferred Shopping Channels',
+                    height: 350
+                });
+            }, 1500);
+        }
+        
+        function runAdvancedAnalytics() {
+            // Show loading state
+            const analyticsBtn = document.getElementById('runAdvancedAnalyticsBtn');
+            const originalText = analyticsBtn.innerHTML;
+            analyticsBtn.innerHTML = '<span class="loading"></span> Analyzing...';
+            analyticsBtn.disabled = true;
+            
+            setTimeout(() => {
+                analyticsBtn.innerHTML = originalText;
+                analyticsBtn.disabled = false;
+                
+                // Update analytics tabs
+                updateClusteringAnalysis();
+                updateTrendAnalysis();
+                updateCohortAnalysis();
+                updateCorrelationAnalysis();
+            }, 2000);
+        }
+        
+        function runClustering() {
+            // Show loading state
+            const clusterBtn = document.getElementById('runClusteringBtn');
+            const originalText = clusterBtn.innerHTML;
+            clusterBtn.innerHTML = '<span class="loading"></span> Clustering...';
+            clusterBtn.disabled = true;
+            
+            setTimeout(() => {
+                clusterBtn.innerHTML = originalText;
+                clusterBtn.disabled = false;
+                
+                updateClusteringAnalysis();
+            }, 1500);
+        }
+        
+        function updateClusteringAnalysis() {
+            // Update cluster scatter plot
+            Plotly.newPlot('cluster-scatter-plot', [{
+                x: [15, 28, 45, 78],
+                y: [18.5, 9.2, 4.1, 1.8],
+                mode: 'markers',
+                type: 'scatter',
+                text: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                marker: {
+                    size: [20, 16, 12, 8],
+                    color: ['#E5E4E2', '#FFD700', '#C0C0C0', '#CD7F32']
+                }
+            }], {
+                title: 'Customer Clusters: Recency vs Frequency',
+                xaxis: { title: 'Avg. Recency (days)' },
+                yaxis: { title: 'Avg. Frequency' },
+                height: 350
+            });
+        }
+        
+        function updateTrendAnalysis() {
+            // Update revenue trend chart
+            Plotly.newPlot('revenue-trend-chart', [{
+                x: ['Q1', 'Q2', 'Q3', 'Q4'],
+                y: [450, 520, 480, 610],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Total Revenue',
+                line: { color: '#3498db' }
+            }], {
+                title: 'Quarterly Revenue Trend',
+                height: 350
+            });
+        }
+        
+        function updateCohortAnalysis() {
+            // Update cohort retention chart
+            Plotly.newPlot('cohort-retention-chart', [{
+                z: [[100, 78, 65, 52], [100, 82, 68, 55], [100, 85, 72, 58]],
+                x: ['Month 1', 'Month 3', 'Month 6', 'Month 12'],
+                y: ['Jan 2023', 'Feb 2023', 'Mar 2023'],
+                type: 'heatmap',
+                colorscale: 'Blues'
+            }], {
+                title: 'Cohort Retention Rates',
+                height: 350
+            });
+        }
+        
+        function updateCorrelationAnalysis() {
+            // Update correlation matrix
+            Plotly.newPlot('correlation-matrix', [{
+                z: [[1, 0.82, 0.76, 0.65], [0.82, 1, 0.68, 0.54], [0.76, 0.68, 1, 0.72], [0.65, 0.54, 0.72, 1]],
+                x: ['Frequency', 'Monetary', 'Tenure', 'Avg Order Value'],
+                y: ['Frequency', 'Monetary', 'Tenure', 'Avg Order Value'],
+                type: 'heatmap',
+                colorscale: 'RdBu'
+            }], {
+                title: 'Customer Metrics Correlation Matrix',
+                height: 350
+            });
+        }
+        
+        function runPredictions() {
+            // Show loading state
+            const predictionsBtn = document.getElementById('runPredictionsBtn');
+            const originalText = predictionsBtn.innerHTML;
+            predictionsBtn.innerHTML = '<span class="loading"></span> Predicting...';
+            predictionsBtn.disabled = true;
+            
+            setTimeout(() => {
+                predictionsBtn.innerHTML = originalText;
+                predictionsBtn.disabled = false;
+                
+                // Update prediction tabs
+                updateChurnPredictions();
+                updateLTVPredictions();
+                updateNextPurchasePredictions();
+            }, 2000);
+        }
+        
+        function updateChurnPredictions() {
+            // Update churn segment chart
+            Plotly.newPlot('churn-segment-chart', [{
+                x: ['Platinum', 'Gold', 'Silver', 'Bronze'],
+                y: [5.8, 12.4, 23.6, 69.1],
+                type: 'bar',
+                marker: { color: '#e74c3c' }
+            }], {
+                title: 'Churn Rate by Segment',
+                height: 350
+            });
+        }
+        
+        function updateLTVPredictions() {
+            // Update LTV distribution chart
+            Plotly.newPlot('ltv-distribution-chart', [{
+                x: ['<$500', '$500-$1k', '$1k-$2k', '$2k-$5k', '>$5k'],
+                y: [35, 28, 20, 12, 5],
+                type: 'bar',
+                marker: { color: '#3498db' }
+            }], {
+                title: 'Customer Lifetime Value Distribution',
+                height: 350
+            });
+        }
+        
+        function updateNextPurchasePredictions() {
+            // Update next purchase timing
+            Plotly.newPlot('next-purchase-timing', [{
+                x: ['<7 days', '7-14 days', '15-30 days', '31-60 days', '>60 days'],
+                y: [12, 25, 35, 20, 8],
+                type: 'bar',
+                marker: { color: '#2ecc71' }
+            }], {
+                title: 'Predicted Time to Next Purchase',
+                height: 350
+            });
+        }
+        
+        function generateFullReport() {
+            alert('Full report generation started! This would typically create a comprehensive PDF report with all analytics and visualizations.');
+        }
+        
+        function buildCustomReport() {
+            alert('Custom report builder activated! This would allow users to select specific metrics, segments, and time periods for their report.');
+        }
+        
+        function exportSegments() {
+            alert('Segmentation data exported successfully!');
+        }
+        
+        function simulateProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            let width = 0;
+            
+            const interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                    progressText.textContent = 'Processing complete!';
+                } else {
+                    width += 5;
+                    progressBar.style.width = width + '%';
+                    progressText.textContent = `Processing... ${width}%`;
+                }
+            }, 100);
+        }
+        
+        function showDataPreview(data) {
+            // Create a simple table preview (first 10 rows)
+            const previewTable = document.getElementById('previewTable');
+            const headers = Object.keys(data[0]);
+            
+            let tableHTML = '<table class="data-table"><thead><tr>';
+            
+            // Create header row
+            headers.forEach(header => {
+                tableHTML += `<th>${header}</th>`;
+            });
+            
+            tableHTML += '</tr></thead><tbody>';
+            
+            // Create data rows (first 10)
+            data.slice(0, 10).forEach(row => {
+                tableHTML += '<tr>';
+                headers.forEach(header => {
+                    tableHTML += `<td>${row[header]}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            previewTable.innerHTML = tableHTML;
         }
         
         function formatFileSize(bytes) {
